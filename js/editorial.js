@@ -1,5 +1,5 @@
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let series=[], authenticated=false, current=null, draft=null, chapterIndex=-1, filter='Todos', query='', order='updated', adminQuery='';
+let series=[], authenticated=false, currentUser=null, current=null, draft=null, chapterIndex=-1, filter='Todos', query='', order='updated', adminQuery='';
 const favorites=()=>JSON.parse(localStorage.getItem('vortex-favorites')||'[]');
 const image=s=>/^(https?:\/\/|data:image\/(png|jpeg|webp|gif);base64,|\/assets\/[a-z0-9-]+\.(?:svg|webp|png|jpg)$)/.test(s||'')?esc(s):'';
 const newestFirst=(a,b)=>(Date.parse(b.updatedAt)||0)-(Date.parse(a.updatedAt)||0);
@@ -55,13 +55,20 @@ function renderAdminLogin(){
       btn.textContent='Verificando...';
 
       try{
-        await api('login','POST',{
+        const res=await api('login','POST',{
           email:form.elements.email.value,
           password:form.elements.password.value
         });
-        authenticated=true;
-        admin();
-        toast('Bienvenido al panel');
+        currentUser=res.user;
+        authenticated=!!res.authenticated;
+        renderUserSlot();
+        if(authenticated){
+          admin();
+          toast('Bienvenido al panel, '+currentUser.username);
+        } else {
+          errEl.textContent='Tu cuenta no tiene permisos de administrador.';
+          errEl.style.display='block';
+        }
       }catch(err){
         errEl.textContent='El correo o la contraseña no son correctos.';
         errEl.style.display='block';
@@ -73,7 +80,7 @@ function renderAdminLogin(){
   }
 }
 
-function admin(){if(!authenticated){renderAdminLogin();return;}$('#app').innerHTML=`<div class="admin-top"><div><p class="eyebrow">ANGELSCAN / ESTUDIO EDITORIAL</p><h1>Todo bajo control<span class="accent">.</span></h1><p class="muted">Tu catálogo, tus historias y lo que está leyendo la comunidad.</p></div><button id="logout" class="secondary">Cerrar sesión</button></div><div class="stats">${[['Series publicadas',series.length],['Capítulos disponibles',series.reduce((n,m)=>n+m.chapters.length,0)],['Visitas registradas',count(series.reduce((n,m)=>n+(Number(m.views)||0),0))],['En emisión',series.filter(m=>m.status==='En emisión').length]].map(([l,v])=>`<div><p>${l}</p><strong>${v}</strong></div>`).join('')}</div><div class="admin-toolbar"><div class="tabs"><button id="all-series" class="active">Catálogo</button><button id="most-viewed">Más vistos</button></div><button class="primary" id="new-series">+ Nueva serie</button></div><input id="admin-search" type="search" placeholder="Buscar por título o tipo…" aria-label="Buscar en administración"><div class="admin-grid" id="admin-grid"></div>`;let popular=false;const render=()=>{$('#admin-grid').innerHTML=[...series].filter(m=>`${m.title} ${m.type}`.toLowerCase().includes(adminQuery.toLowerCase())).sort((a,b)=>popular?b.views-a.views:0).map(m=>`<button class="admin-card" data-edit="${m.id}">${cover(m)}<div><p class="eyebrow">${esc(m.type)} · ${esc(m.status)}</p><h3>${esc(m.title)}</h3><p>${m.chapters.length} capítulos · ${count(m.views)} visitas</p><span>Editar serie y capítulos ↗</span></div></button>`).join('')||'<p class="empty">No hay series. Crea la primera.</p>';bind('[data-edit]','click',e=>editor(e.currentTarget.dataset.edit));};render();$('#admin-search').value=adminQuery;$('#admin-search').oninput=e=>{adminQuery=e.target.value;render();};$('#most-viewed').onclick=()=>{popular=true;$('#most-viewed').classList.add('active');$('#all-series').classList.remove('active');render();};$('#all-series').onclick=()=>{popular=false;$('#all-series').classList.add('active');$('#most-viewed').classList.remove('active');render();};$('#new-series').onclick=()=>editor();$('#logout').onclick=async()=>{await api('logout','POST',{});authenticated=false;location.hash='home';};}
+function admin(){if(!authenticated||!currentUser||currentUser.role!=='admin'){renderAdminLogin();return;}$('#app').innerHTML=`<div class="admin-top"><div><p class="eyebrow">ANGELSCAN / ESTUDIO EDITORIAL</p><h1>Todo bajo control<span class="accent">.</span></h1><p class="muted">Tu catálogo, tus historias y lo que está leyendo la comunidad.</p></div><button id="logout" class="secondary">Cerrar sesión</button></div><div class="stats">${[['Series publicadas',series.length],['Capítulos disponibles',series.reduce((n,m)=>n+m.chapters.length,0)],['Visitas registradas',count(series.reduce((n,m)=>n+(Number(m.views)||0),0))],['En emisión',series.filter(m=>m.status==='En emisión').length]].map(([l,v])=>`<div><p>${l}</p><strong>${v}</strong></div>`).join('')}</div><div class="admin-toolbar"><div class="tabs"><button id="all-series" class="active">Catálogo</button><button id="most-viewed">Más vistos</button></div><button class="primary" id="new-series">+ Nueva serie</button></div><input id="admin-search" type="search" placeholder="Buscar por título o tipo…" aria-label="Buscar en administración"><div class="admin-grid" id="admin-grid"></div>`;let popular=false;const render=()=>{$('#admin-grid').innerHTML=[...series].filter(m=>`${m.title} ${m.type}`.toLowerCase().includes(adminQuery.toLowerCase())).sort((a,b)=>popular?b.views-a.views:0).map(m=>`<button class="admin-card" data-edit="${m.id}">${cover(m)}<div><p class="eyebrow">${esc(m.type)} · ${esc(m.status)}</p><h3>${esc(m.title)}</h3><p>${m.chapters.length} capítulos · ${count(m.views)} visitas</p><span>Editar serie y capítulos ↗</span></div></button>`).join('')||'<p class="empty">No hay series. Crea la primera.</p>';bind('[data-edit]','click',e=>editor(e.currentTarget.dataset.edit));};render();$('#admin-search').value=adminQuery;$('#admin-search').oninput=e=>{adminQuery=e.target.value;render();};$('#most-viewed').onclick=()=>{popular=true;$('#most-viewed').classList.add('active');$('#all-series').classList.remove('active');render();};$('#all-series').onclick=()=>{popular=false;$('#all-series').classList.add('active');$('#most-viewed').classList.remove('active');render();};$('#new-series').onclick=()=>editor();$('#logout').onclick=async()=>{await api('logout','POST',{});authenticated=false;location.hash='home';};}
 function editor(id){draft=id?structuredClone(series.find(m=>m.id===id)):{id:crypto.randomUUID(),title:'',type:'Manhwa',status:'En emisión',cover:'',banner:'',author:'',artist:'',synopsis:'',genres:[],rating:0,chapters:[],views:0};chapterIndex=-1;$('#app').innerHTML=`<button class="back quiet" id="editor-back">← Volver al panel</button><div class="editor-title"><div><p class="eyebrow">${id?'EDITANDO SERIE / '+esc(draft.id):'AMPLÍA TU BIBLIOTECA'}</p><h1 id="editing-title">${esc(draft.title||'Una nueva historia')}</h1></div><button class="primary" id="save-series">Guardar cambios →</button></div><div class="editor-layout"><div><form id="series-form" class="panel"><h2>Información de la serie</h2><div class="form-grid">${field('title','Título',draft.title,'text',true)}${field('altTitles','Títulos alternativos',draft.altTitles)}<label>Tipo<select name="type">${['Manhwa','Manhua','Manga'].map(x=>`<option ${draft.type===x?'selected':''}>${x}</option>`).join('')}</select></label><label>Estado<select name="status">${['En emisión','Finalizado','En pausa'].map(x=>`<option ${draft.status===x?'selected':''}>${x}</option>`).join('')}</select></label>${field('author','Autor',draft.author)}${field('artist','Artista',draft.artist)}${field('cover','URL de portada',draft.cover,'text',true)}<label>Subir portada<input id="cover-file" type="file" accept="image/png,image/jpeg,image/webp"></label>${field('banner','URL del banner',draft.banner,'text')}${field('genres','Géneros separados por comas',draft.genres.join(', '))}${field('rating','Puntuación (0–10)',draft.rating,'number')}</div><label>Sinopsis<textarea name="synopsis" rows="5">${esc(draft.synopsis)}</textarea></label><label class="checkbox"><input type="checkbox" name="featured" ${draft.featured?'checked':''}> Destacar en la portada del sitio</label><label class="checkbox"><input type="checkbox" name="demo" ${draft.demo?'checked':''}> Contenido de demostración</label></form><section class="panel"><div class="section-title"><h2>Capítulos de esta serie</h2><button id="new-chapter" class="secondary">+ Capítulo</button></div><div id="editor-chapters"></div><form id="chapter-form" class="chapter-form"><h3 id="chapter-heading">Añadir capítulo</h3><div class="form-grid">${field('number','Número de capítulo','','number',true)}${field('title','Título del capítulo','','text',true)}</div><label>Páginas: una URL por línea, en orden de lectura<textarea name="pages" rows="5" required placeholder="https://tu-cdn.com/01.webp"></textarea></label><label>O subir imágenes (ordenadas por nombre)<input id="page-files" type="file" accept="image/png,image/jpeg,image/webp" multiple></label><p class="muted">Máximo 30 MB por guardado. Para capítulos grandes, utiliza URLs de tu almacenamiento de imágenes.</p><div class="page-previews" id="page-previews"></div><button class="secondary">Aplicar capítulo al borrador</button><button type="button" id="cancel-chapter" class="quiet">Cancelar edición</button></form></section>${id?'<button class="danger" id="delete-series">Eliminar esta serie y sus capítulos</button>':''}</div><aside class="preview-panel"><p class="eyebrow">VISTA PREVIA DE LA FICHA</p><div id="live-preview"></div><p class="muted">Los cambios se publican al pulsar Guardar cambios. Los capítulos aplicados permanecen en el borrador hasta entonces.</p><p id="save-status" role="status"></p></aside></div>`;
 const f=$('#series-form');f.elements.rating.min=0;f.elements.rating.max=10;f.elements.rating.step='.1';f.addEventListener('input',preview);$('#editor-back').onclick=()=>{if(confirm('¿Volver al panel? Los cambios sin guardar se perderán.'))admin();};$('#save-series').onclick=saveSeries;$('#cover-file').onchange=async e=>{try{const values=await readFiles(e.target.files);f.elements.cover.type='text';f.elements.cover.value=values[0]||'';preview();}catch(e){toast(e.message);}};$('#page-files').onchange=async e=>{try{$('#chapter-form').elements.pages.value=(await readFiles(e.target.files)).join('\n');pagePreview();}catch(e){toast(e.message);}};$('#chapter-form').elements.pages.oninput=pagePreview;$('#chapter-form').elements.number.min=0;$('#chapter-form').elements.number.step='.1';$('#chapter-form').onsubmit=e=>{e.preventDefault();const cf=e.currentTarget;const number=Number(cf.elements.number.value),pages=cf.elements.pages.value.split('\n').map(x=>x.trim()).filter(Boolean);if(!pages.length||pages.some(p=>!image(p)))return toast('Usa imágenes HTTPS, HTTP o archivos de imagen.');if(draft.chapters.some((c,i)=>c.number===number&&i!==chapterIndex))return toast('Este número de capítulo ya existe. Edita el capítulo correspondiente.');const c={id:draft.id+'-cap-'+number,number,title:cf.elements.title.value,pages,date:new Date().toISOString()};if(chapterIndex<0)draft.chapters.push(c);else draft.chapters[chapterIndex]=c;resetChapter();renderChapters();toast('Capítulo aplicado al borrador. Guarda los cambios para publicarlo.');};$('#new-chapter').onclick=()=>{resetChapter();$('#chapter-form').scrollIntoView({behavior:'smooth'});};$('#cancel-chapter').onclick=resetChapter;if(id)$('#delete-series').onclick=async()=>{if(confirm(`¿Eliminar «${draft.title}» y todos sus capítulos? Esta acción no se puede deshacer.`)){try{await api('series/'+draft.id,'DELETE');series=await api('catalog');admin();toast('Serie eliminada');}catch(e){toast(e.message);}}};renderChapters();preview();}
 function field(name,label,value,type='text',required=false){return `<label>${label}<input name="${name}" type="${type}" value="${esc(value)}" ${required?'required':''}></label>`;}
@@ -96,8 +103,174 @@ function renderGrid(){let list=series.filter(m=>(!catalogMode.favorite||favorite
 function popularPage(){$('#app').innerHTML=`<section class="popular-page"><div class="series-page-heading"><p class="eyebrow">EL RANKING DE ANGELSCAN</p><h1>Populares</h1><p class="muted">Las historias más visitadas, ordenadas por sus lecturas en el sitio.</p></div><div class="card-grid recent-grid">${cards([...series].sort((a,b)=>(Number(b.views)||0)-(Number(a.views)||0)))}</div></section>`;}
 function route(){const hash=location.hash.slice(1)||'home';const [path,search='']=hash.split('?');const [view,id,num]=path.split('/');const params=new URLSearchParams(search);if(view==='admin')admin();else if(view==='series')detail(id);else if(view==='read')reader(id,num);else if(view==='catalog')catalogPage(false,params);else if(view==='favorites')catalogPage(true,params);else if(view==='popular')popularPage();else home();document.querySelectorAll('.site-header nav a').forEach(a=>{const active=a.getAttribute('href')==='#'+(view==='series'||view==='read'?'catalog':view);a.classList.toggle('current',active);if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});window.scrollTo(0,0);}
 
-if($('#admin-link')){$('#admin-link').onclick=()=>{location.hash='#admin';};}
-if($('#login-form')){$('#login-form').onsubmit=async e=>{e.preventDefault();try{await api('login','POST',{password:e.target.elements.password.value});authenticated=true;$('#login')?.close();location.hash='#admin';}catch(err){if($('#login-error'))$('#login-error').textContent=err.message;}};}
-window.addEventListener('hashchange',route);Promise.all([api('catalog'),api('session')]).then(([data,session])=>{series=data;authenticated=session.authenticated;route();}).catch(e=>{$('#app').innerHTML='<div class="empty"><h1>No se pudo abrir la biblioteca.</h1><p>Comprueba que el servidor esté en marcha y recarga la página.</p></div>';toast(e.message);});
+function renderUserSlot(){
+  const slot=$('#user-auth-slot');
+  if(!slot)return;
+  if(!currentUser){
+    slot.innerHTML=`<button class="auth-pill-btn" onclick="openAuthModal('login')"><span>👤</span> <span>Entrar</span></button>`;
+  }else{
+    const isAdmin=currentUser.role==='admin';
+    slot.innerHTML=`
+      <div class="user-profile-menu">
+        <button class="user-pill-btn" onclick="toggleUserDropdown()" aria-expanded="false">
+          <span style="font-size:15px">👤</span>
+          <span class="user-name-text">${esc(currentUser.username)}</span>
+          ${isAdmin?'<span class="admin-badge">ADMIN</span>':''}
+          <span style="font-size:9px;color:#8b9298">▼</span>
+        </button>
+        <div id="user-dropdown" class="user-dropdown-panel" style="display:none;">
+          <div class="user-dropdown-header">
+            <strong style="color:#fff">${esc(currentUser.username)}</strong>
+            <div style="font-size:11px;color:#8b9298;margin-top:2px">${esc(currentUser.email)}</div>
+            <div style="font-size:10px;color:#c89647;margin-top:4px">${isAdmin?'⭐ Administrador':'✨ Lector VIP'}</div>
+          </div>
+          <hr class="dropdown-sep">
+          ${isAdmin?'<a href="#admin" class="dropdown-item admin-highlight">⚙️ Panel de Control</a>':''}
+          <a href="#favorites" class="dropdown-item">⭐ Mi biblioteca</a>
+          <button onclick="handleLogout()" class="dropdown-item logout-btn">Cerrar sesión</button>
+        </div>
+      </div>
+    `;
+  }
+}
+
+window.toggleUserDropdown=function(){
+  const dd=$('#user-dropdown');
+  if(dd)dd.style.display=dd.style.display==='none'?'block':'none';
+};
+
+window.addEventListener('click',e=>{
+  if(!e.target.closest('.user-profile-menu')){
+    const dd=$('#user-dropdown');
+    if(dd)dd.style.display='none';
+  }
+});
+
+window.openAuthModal=function(tab='login'){
+  const modal=$('#auth-modal');
+  if(!modal)return;
+  switchAuthTab(tab);
+  const err=$('#auth-modal-error');
+  if(err)err.style.display='none';
+  modal.showModal();
+};
+
+window.closeAuthModal=function(){
+  $('#auth-modal')?.close();
+};
+
+window.switchAuthTab=function(tab){
+  const title=$('#auth-modal-title');
+  const desc=$('#auth-modal-desc');
+  const tabLogin=$('#tab-login');
+  const tabReg=$('#tab-register');
+  const formLogin=$('#form-login');
+  const formReg=$('#form-register');
+  const err=$('#auth-modal-error');
+  if(err)err.style.display='none';
+
+  if(tab==='register'){
+    if(title)title.textContent='Crea tu cuenta';
+    if(desc)desc.textContent='Regístrate para guardar tu progreso y favoritos.';
+    tabLogin?.classList.remove('active');
+    tabReg?.classList.add('active');
+    if(formLogin)formLogin.style.display='none';
+    if(formReg)formReg.style.display='block';
+  }else{
+    if(title)title.textContent='Bienvenido de nuevo';
+    if(desc)desc.textContent='Entra con tu correo para seguir donde lo dejaste.';
+    tabLogin?.classList.add('active');
+    tabReg?.classList.remove('active');
+    if(formLogin)formLogin.style.display='block';
+    if(formReg)formReg.style.display='none';
+  }
+};
+
+window.handleLogout=async function(){
+  await api('logout','POST',{});
+  authenticated=false;
+  currentUser=null;
+  renderUserSlot();
+  toast('Sesión cerrada');
+  if(location.hash==='#admin')location.hash='home';
+};
+
+function bindAuthForms(){
+  const formLogin=$('#form-login');
+  if(formLogin){
+    formLogin.onsubmit=async e=>{
+      e.preventDefault();
+      const err=$('#auth-modal-error'), btn=$('#btn-login');
+      if(err)err.style.display='none';
+      if(btn){btn.disabled=true;btn.textContent='Verificando...';}
+      try{
+        const res=await api('login','POST',{
+          email:formLogin.elements.email.value,
+          password:formLogin.elements.password.value
+        });
+        currentUser=res.user;
+        authenticated=!!res.authenticated;
+        renderUserSlot();
+        closeAuthModal();
+        toast('¡Bienvenido, '+currentUser.username+'!');
+        if(location.hash==='#admin'&&authenticated)admin();
+      }catch(errRes){
+        if(err){
+          err.textContent=errRes.message||'El correo o la contraseña no son correctos.';
+          err.style.display='block';
+        }
+      }finally{
+        if(btn){btn.disabled=false;btn.textContent='Entrar';}
+      }
+    };
+  }
+
+  const formReg=$('#form-register');
+  if(formReg){
+    formReg.onsubmit=async e=>{
+      e.preventDefault();
+      const err=$('#auth-modal-error'), btn=$('#btn-register');
+      if(err)err.style.display='none';
+      if(btn){btn.disabled=true;btn.textContent='Creando cuenta...';}
+      try{
+        const res=await api('register','POST',{
+          username:formReg.elements.username.value,
+          email:formReg.elements.email.value,
+          password:formReg.elements.password.value
+        });
+        currentUser=res.user;
+        authenticated=!!res.authenticated;
+        renderUserSlot();
+        closeAuthModal();
+        toast('¡Cuenta creada con éxito! Bienvenido, '+currentUser.username);
+      }catch(errRes){
+        if(err){
+          err.textContent=errRes.message||'Error al registrar la cuenta.';
+          err.style.display='block';
+        }
+      }finally{
+        if(btn){btn.disabled=false;btn.textContent='Crear mi cuenta';}
+      }
+    };
+  }
+}
+
+window.addEventListener('hashchange',route);
+window.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&e.shiftKey&&(e.key==='A'||e.key==='a')){
+    location.hash='#admin';
+  }
+});
+Promise.all([api('catalog'),api('session')]).then(([data,session])=>{
+  series=data;
+  authenticated=session.authenticated;
+  currentUser=session.user;
+  renderUserSlot();
+  bindAuthForms();
+  route();
+}).catch(e=>{
+  $('#app').innerHTML='<div class="empty"><h1>No se pudo abrir la biblioteca.</h1><p>Comprueba que el servidor esté en marcha y recarga la página.</p></div>';
+  toast(e.message);
+});
 
 

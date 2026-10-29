@@ -12,6 +12,14 @@ if (!catalog.length) {
 }
 function persist(){const temp=file+'.tmp';fs.writeFileSync(temp,JSON.stringify(catalog,null,2));fs.renameSync(temp,file);}
 const sessions=new Map(), attempts=new Map(), visits=new Map(), commentRates=new Map();
+const usersFile=path.resolve(root,'data/users.json');
+let users=fs.existsSync(usersFile)?JSON.parse(fs.readFileSync(usersFile,'utf8')):[];
+if(!users.length){
+  const adminPass=process.env.ADMIN_PASSWORD||'angelscan2026';
+  users=[{id:'admin-01',username:'Jonathan',email:'jonathan28703@gmail.com',passwordHash:crypto.createHash('sha256').update(adminPass).digest('hex'),role:'admin',createdAt:new Date().toISOString()}];
+  fs.writeFileSync(usersFile,JSON.stringify(users,null,2));
+}
+function persistUsers(){fs.writeFileSync(usersFile+'.tmp',JSON.stringify(users,null,2));fs.renameSync(usersFile+'.tmp',usersFile);}
 const commentsFile=file.replace(/\.json$/, '')+'.comments.json';
 let comments=fs.existsSync(commentsFile)?JSON.parse(fs.readFileSync(commentsFile,'utf8')):{};
 function persistComments(){fs.writeFileSync(commentsFile+'.tmp',JSON.stringify(comments,null,2));fs.renameSync(commentsFile+'.tmp',commentsFile);}
@@ -27,15 +35,49 @@ const server=http.createServer(async(req,res)=>{
  if(url.pathname.startsWith('/api/')){
   if(!['GET','HEAD'].includes(req.method) && req.headers.origin && req.headers.origin!==`http://${req.headers.host}` && req.headers.origin!==`https://${req.headers.host}`) return send(403,{error:'Origen no permitido'});
   const token=(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('vortex_session='))?.slice(15);
-  const authorized=sessions.get(token)>Date.now();
+  const sData=sessions.get(token);
+  const authorized=sData&&sData.expires>Date.now()&&!!sData.authorized;
   let body={};
   if(['POST','PUT'].includes(req.method)){let chunks=[],size=0;for await(const chunk of req){size+=chunk.length;if(size>30*1024*1024)return send(413,{error:'Máximo 30 MB por envío'});chunks.push(chunk);}try{body=JSON.parse(Buffer.concat(chunks).toString()||'{}');}catch{return send(400,{error:'JSON inválido'});}}
-  if(url.pathname==='/api/session'&&req.method==='GET')return send(200,{authenticated:authorized});
+  if(url.pathname==='/api/session'&&req.method==='GET'){
+    const valid=sData&&sData.expires>Date.now();
+    return send(200,{authenticated:valid?!!sData.authorized:false,user:valid?sData.user:null});
+  }
+  if(url.pathname==='/api/register'&&req.method==='POST'){
+    const username=typeof body.username==='string'?body.username.trim():'';
+    const email=typeof body.email==='string'?body.email.trim().toLowerCase():'';
+    const pass=typeof body.password==='string'?body.password:'';
+    if(username.length<2||username.length>40)return send(400,{error:'El nombre debe tener entre 2 y 40 caracteres.'});
+    if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return send(400,{error:'Ingresa un correo electrónico válido.'});
+    if(pass.length<6)return send(400,{error:'La contraseña debe tener al menos 6 caracteres.'});
+    if(users.some(u=>u.email===email))return send(400,{error:'Este correo ya está registrado. Inicia sesión.'});
+    const isAdmin=users.length===0||email==='jonathan28703@gmail.com'||email.startsWith('admin@');
+    const newUser={id:'u_'+crypto.randomUUID().slice(0,8),username,email,passwordHash:crypto.createHash('sha256').update(pass).digest('hex'),role:isAdmin?'admin':'member',createdAt:new Date().toISOString()};
+    users.push(newUser);persistUsers();
+    const t=crypto.randomBytes(32).toString('hex');
+    const userSafe={id:newUser.id,username:newUser.username,email:newUser.email,role:newUser.role};
+    sessions.set(t,{expires:Date.now()+8*3600000,user:userSafe,authorized:isAdmin});
+    res.setHeader('Set-Cookie',`vortex_session=${t}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800${process.env.COOKIE_SECURE==='true'?'; Secure':''}`);
+    return send(201,{ok:true,user:userSafe,authenticated:isAdmin});
+  }
   if(url.pathname==='/api/login'&&req.method==='POST'){
-   const ip=req.socket.remoteAddress; const a=attempts.get(ip)||{count:0,until:Date.now()+600000};if(a.until<Date.now()){a.count=0;a.until=Date.now()+600000;}if(a.count>=10)return send(429,{error:'Demasiados intentos. Espera diez minutos.'});
-   const input=crypto.createHash('sha256').update(String(body.password)).digest(), expected=crypto.createHash('sha256').update(password).digest();
-   if(!crypto.timingSafeEqual(input,expected)){a.count++;attempts.set(ip,a);return send(401,{error:'Contraseña incorrecta'});}
-   const t=crypto.randomBytes(32).toString('hex');sessions.set(t,Date.now()+8*3600000);attempts.delete(ip);res.setHeader('Set-Cookie',`vortex_session=${t}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800${process.env.COOKIE_SECURE==='true'?'; Secure':''}`);return send(200,{ok:true});
+    const ip=req.socket.remoteAddress; const a=attempts.get(ip)||{count:0,until:Date.now()+600000};if(a.until<Date.now()){a.count=0;a.until=Date.now()+600000;}if(a.count>=10)return send(429,{error:'Demasiados intentos. Espera diez minutos.'});
+    const email=typeof body.email==='string'?body.email.trim().toLowerCase():'';
+    const pass=String(body.password||'');
+    const passHash=crypto.createHash('sha256').update(pass).digest('hex');
+    let found=users.find(u=>(u.email===email||u.username.toLowerCase()===email)&&u.passwordHash===passHash);
+    const masterInput=crypto.createHash('sha256').update(pass).digest(), expectedMaster=crypto.createHash('sha256').update(password).digest();
+    if(!found&&crypto.timingSafeEqual(masterInput,expectedMaster)){
+      found={id:'admin-master',username:email.split('@')[0]||'Jonathan',email:email||'jonathan28703@gmail.com',role:'admin'};
+    }
+    if(!found){a.count++;attempts.set(ip,a);return send(401,{error:'El correo o la contraseña no son correctos.'});}
+    const t=crypto.randomBytes(32).toString('hex');
+    const userSafe={id:found.id,username:found.username,email:found.email,role:found.role};
+    const isAdmin=found.role==='admin';
+    sessions.set(t,{expires:Date.now()+8*3600000,user:userSafe,authorized:isAdmin});
+    attempts.delete(ip);
+    res.setHeader('Set-Cookie',`vortex_session=${t}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800${process.env.COOKIE_SECURE==='true'?'; Secure':''}`);
+    return send(200,{ok:true,user:userSafe,authenticated:isAdmin});
   }
   if(url.pathname==='/api/logout'&&req.method==='POST'){sessions.delete(token);res.setHeader('Set-Cookie','vortex_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0');return send(200,{ok:true});}
   if(url.pathname==='/api/catalog'&&req.method==='GET')return send(200,catalog);

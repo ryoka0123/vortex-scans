@@ -1,0 +1,10 @@
+[
+  {
+    "id": "admin-01",
+    "username": "Jonathan",
+    "email": "jonathan28703@gmail.com",
+    "passwordHash": "a493ad2301c77676fbdf00ee8f57293bcb246a27432eb25664fe6cf4420ae1b2",
+    "role": "admin",
+    "createdAt": "2026-10-29T19:43:54.253Z"
+  }
+]
