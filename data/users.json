@@ -6,5 +6,13 @@
     "passwordHash": "a493ad2301c77676fbdf00ee8f57293bcb246a27432eb25664fe6cf4420ae1b2",
     "role": "admin",
     "createdAt": "2026-10-29T19:43:54.253Z"
+  },
+  {
+    "id": "u_468b1f95",
+    "username": "ryoka01",
+    "email": "alexgamer01yt@gmail.com",
+    "passwordHash": "0b26756c41016a8f569d355e38afb9095816896a4da7e0467ccc7c50623c8993",
+    "role": "member",
+    "createdAt": "2026-10-29T19:49:47.518Z"
   }
 ]
