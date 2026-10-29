@@ -1,0 +1,305 @@
+/**
+ * Catálogo Inicial de Manhwas y Mangas
+ * Optimizado para carga ultra rápida y estructura limpia
+ */
+const INITIAL_MANHWAS = [
+  {
+    id: "solo-leveling-ragnarok",
+    title: "Solo Leveling: Ragnarok",
+    altTitles: "나 혼자만 레벨업: 라그나로크, Subiendo de Nivel Solo: Ragnarok",
+    slug: "solo-leveling-ragnarok",
+    type: "Manhwa",
+    status: "En emisión",
+    rating: 9.9,
+    views: "1.4M",
+    bookmarks: "89.2K",
+    author: "Daul / Redice Studio",
+    artist: "JIN",
+    cover: "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&auto=format&fit=crop&q=80",
+    banner: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600&auto=format&fit=crop&q=80",
+    genres: ["Acción", "Fantasía", "Sistema", "Monstruos", "Sobrenatural"],
+    synopsis: "La Tierra enfrenta una nueva crisis cósmica cuando los Dioses Exteriores amenazan con devorarlo todo. Sung Suho, el hijo del legendario Monarca de las Sombras Sung Jinwoo, despierta sus poderes latentes para proteger el mundo que su padre salvó.",
+    featured: true,
+    latestChapter: 32,
+    updatedAt: "Hace 15 minutos",
+    chapters: [
+      {
+        id: "slr-cap-32",
+        number: 32,
+        title: "El despertar de la espada sombría",
+        date: "Hace 15 minutos",
+        pages: [
+          "https://picsum.photos/id/1015/800/1200",
+          "https://picsum.photos/id/1016/800/1200",
+          "https://picsum.photos/id/1018/800/1200",
+          "https://picsum.photos/id/1019/800/1200",
+          "https://picsum.photos/id/1020/800/1200",
+          "https://picsum.photos/id/1021/800/1200"
+        ]
+      },
+      {
+        id: "slr-cap-31",
+        number: 31,
+        title: "La prueba en la Mazmorra de Hielo",
+        date: "Hace 3 días",
+        pages: [
+          "https://picsum.photos/id/1022/800/1200",
+          "https://picsum.photos/id/1023/800/1200",
+          "https://picsum.photos/id/1024/800/1200",
+          "https://picsum.photos/id/1025/800/1200"
+        ]
+      },
+      {
+        id: "slr-cap-30",
+        number: 30,
+        title: "Sombras en el abismo",
+        date: "Hace 1 semana",
+        pages: [
+          "https://picsum.photos/id/1026/800/1200",
+          "https://picsum.photos/id/1027/800/1200",
+          "https://picsum.photos/id/1028/800/1200"
+        ]
+      },
+      {
+        id: "slr-cap-1",
+        number: 1,
+        title: "Prólogo: El legado del Monarca",
+        date: "Hace 2 meses",
+        pages: [
+          "https://picsum.photos/id/1029/800/1200",
+          "https://picsum.photos/id/1031/800/1200",
+          "https://picsum.photos/id/1032/800/1200"
+        ]
+      }
+    ]
+  },
+  {
+    id: "retorno-mago-catastrofe",
+    title: "El Retorno del Mago de la Catástrofe",
+    altTitles: "재앙급 영웅이 귀환했다, The Return of the Disaster-Class Hero",
+    slug: "retorno-mago-catastrofe",
+    type: "Manhwa",
+    status: "En emisión",
+    rating: 9.8,
+    views: "980K",
+    bookmarks: "64.1K",
+    author: "SAN.G",
+    artist: "Redice",
+    cover: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600&auto=format&fit=crop&q=80",
+    banner: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=1600&auto=format&fit=crop&q=80",
+    genres: ["Acción", "Venganza", "Regresión", "Magia", "Comedia"],
+    synopsis: "Hubo una vez trece santos que salvaron al mundo. Sin embargo, el decimotercer héroe fue traicionado por sus propios compañeros y abandonado en una mazmorra infernal durante veinte años. Ahora ha salido, y la hora del ajuste de cuentas ha llegado.",
+    featured: true,
+    latestChapter: 88,
+    updatedAt: "Hace 45 minutos",
+    chapters: [
+      {
+        id: "rmc-cap-88",
+        number: 88,
+        title: "El Santo de Cáncer tiembla",
+        date: "Hace 45 minutos",
+        pages: [
+          "https://picsum.photos/id/1033/800/1200",
+          "https://picsum.photos/id/1035/800/1200",
+          "https://picsum.photos/id/1036/800/1200",
+          "https://picsum.photos/id/1037/800/1200"
+        ]
+      },
+      {
+        id: "rmc-cap-87",
+        number: 87,
+        title: "Cacería de traidores",
+        date: "Hace 4 días",
+        pages: [
+          "https://picsum.photos/id/1038/800/1200",
+          "https://picsum.photos/id/1039/800/1200",
+          "https://picsum.photos/id/1040/800/1200"
+        ]
+      },
+      {
+        id: "rmc-cap-1",
+        number: 1,
+        title: "Traición en la Torre Oscura",
+        date: "Hace 6 meses",
+        pages: [
+          "https://picsum.photos/id/1041/800/1200",
+          "https://picsum.photos/id/1042/800/1200"
+        ]
+      }
+    ]
+  },
+  {
+    id: "villana-quiere-divorcio",
+    title: "La Villana Quiere el Divorcio",
+    altTitles: "악역이 이혼을 원할 때, Survive as the Hero's Wife",
+    slug: "villana-quiere-divorcio",
+    type: "Manhwa",
+    status: "Finalizado",
+    rating: 9.7,
+    views: "820K",
+    bookmarks: "55.8K",
+    author: "Nokki",
+    artist: "Abin",
+    cover: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80",
+    banner: "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1600&auto=format&fit=crop&q=80",
+    genres: ["Romance", "Isekai", "Reencarnación", "Drama", "Realeza"],
+    synopsis: "Reencarnó como Canaria Easter, la villana secundaria de una novela de romance destinada a ser ejecutada por su esposo cuando él ascienda al trono. Para escapar de su trágico final, Canaria decide volverse la aliada número uno de su esposo y pedir el divorcio pacífico en el momento adecuado.",
+    featured: true,
+    latestChapter: 112,
+    updatedAt: "Hace 2 horas",
+    chapters: [
+      {
+        id: "vqd-cap-112",
+        number: 112,
+        title: "Epílogo: Nuestro verdadero destino",
+        date: "Hace 2 horas",
+        pages: [
+          "https://picsum.photos/id/1043/800/1200",
+          "https://picsum.photos/id/1044/800/1200",
+          "https://picsum.photos/id/1045/800/1200"
+        ]
+      },
+      {
+        id: "vqd-cap-1",
+        number: 1,
+        title: "El despertar de la falsa villana",
+        date: "Hace 1 año",
+        pages: [
+          "https://picsum.photos/id/1047/800/1200",
+          "https://picsum.photos/id/1048/800/1200"
+        ]
+      }
+    ]
+  },
+  {
+    id: "retorno-secta-monte-hua",
+    title: "El Retorno de la Secta del Monte Hua",
+    altTitles: "화산귀환, Return of the Blossoming Blade",
+    slug: "retorno-secta-monte-hua",
+    type: "Manhwa",
+    status: "En emisión",
+    rating: 9.9,
+    views: "1.7M",
+    bookmarks: "98.4K",
+    author: "Biga",
+    artist: "LICO",
+    cover: "https://images.unsplash.com/photo-1563089145-599997674d42?w=600&auto=format&fit=crop&q=80",
+    banner: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1600&auto=format&fit=crop&q=80",
+    genres: ["Artes Marciales", "Comedia", "Regresión", "Acción", "Cultivo"],
+    synopsis: "Chung Myung, el 13º Discípulo del Santo de la Espada de Flor de Ciruelo, decapitó al Líder del Culto Demoníaco y murió en la cima del Monte Hua. Despierta 100 años después en el cuerpo de un mendigo y descubre que su gloriosa secta ha caído en la ruina absoluta.",
+    featured: false,
+    latestChapter: 135,
+    updatedAt: "Hace 3 horas",
+    chapters: [
+      {
+        id: "rsmh-cap-135",
+        number: 135,
+        title: "La espada florece una vez más",
+        date: "Hace 3 horas",
+        pages: [
+          "https://picsum.photos/id/1049/800/1200",
+          "https://picsum.photos/id/1050/800/1200",
+          "https://picsum.photos/id/1051/800/1200"
+        ]
+      },
+      {
+        id: "rsmh-cap-1",
+        number: 1,
+        title: "La caída y el renacer",
+        date: "Hace 8 meses",
+        pages: [
+          "https://picsum.photos/id/1052/800/1200",
+          "https://picsum.photos/id/1053/800/1200"
+        ]
+      }
+    ]
+  },
+  {
+    id: "lector-omnisciente",
+    title: "Punto de Vista del Lector Omnisciente",
+    altTitles: "전지적 독자 시점, Omniscient Reader's Viewpoint",
+    slug: "lector-omnisciente",
+    type: "Manhwa",
+    status: "En emisión",
+    rating: 9.9,
+    views: "2.1M",
+    bookmarks: "124K",
+    author: "Sing-Shong",
+    artist: "Sleepy-C / Redice",
+    cover: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80",
+    banner: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1600&auto=format&fit=crop&q=80",
+    genres: ["Acción", "Fantasía", "Apocalipsis", "Psicológico", "Supervivencia"],
+    synopsis: "Kim Dokja era el único lector de una novela web de 3,149 capítulos llamada 'Tres Formas de Sobrevivir en un Mundo Arruinado'. El día que lee el capítulo final, el mundo real se transforma de repente en el escenario apocalíptico de la novela.",
+    featured: false,
+    latestChapter: 215,
+    updatedAt: "Ayer",
+    chapters: [
+      {
+        id: "orv-cap-215",
+        number: 215,
+        title: "La constelación del juicio supremo",
+        date: "Ayer",
+        pages: [
+          "https://picsum.photos/id/1054/800/1200",
+          "https://picsum.photos/id/1055/800/1200",
+          "https://picsum.photos/id/1056/800/1200"
+        ]
+      },
+      {
+        id: "orv-cap-1",
+        number: 1,
+        title: "El fin del prólogo",
+        date: "Hace 1 año",
+        pages: [
+          "https://picsum.photos/id/1057/800/1200",
+          "https://picsum.photos/id/1058/800/1200"
+        ]
+      }
+    ]
+  },
+  {
+    id: "principio-despues-del-fin",
+    title: "El Comienzo Después del Fin",
+    altTitles: "The Beginning After The End, TBATE",
+    slug: "principio-despues-del-fin",
+    type: "Manhwa",
+    status: "En emisión",
+    rating: 9.8,
+    views: "1.9M",
+    bookmarks: "110K",
+    author: "TurtleMe",
+    artist: "Fuyuki23",
+    cover: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&auto=format&fit=crop&q=80",
+    banner: "https://images.unsplash.com/photo-1500485035595-cbe6f645feb1?w=1600&auto=format&fit=crop&q=80",
+    genres: ["Fantasía", "Magia", "Isekai", "Aventura", "Reencarnación"],
+    synopsis: "El Rey Grey posee fuerza y riqueza inigualables en un mundo militarizado, pero la soledad carcome su alma. Tras una muerte misteriosa, renace en el continente de Dicathen como Arthur Leywin, un mundo lleno de magia, monstruos y secretos milenarios.",
+    featured: false,
+    latestChapter: 185,
+    updatedAt: "Hace 2 días",
+    chapters: [
+      {
+        id: "tbate-cap-185",
+        number: 185,
+        title: "Vientos de Guerra en el Reino",
+        date: "Hace 2 días",
+        pages: [
+          "https://picsum.photos/id/1059/800/1200",
+          "https://picsum.photos/id/1060/800/1200",
+          "https://picsum.photos/id/1061/800/1200"
+        ]
+      },
+      {
+        id: "tbate-cap-1",
+        number: 1,
+        title: "Un Rey en la cuna",
+        date: "Hace 2 años",
+        pages: [
+          "https://picsum.photos/id/1062/800/1200",
+          "https://picsum.photos/id/1063/800/1200"
+        ]
+      }
+    ]
+  }
+];
+
+window.INITIAL_MANHWAS = INITIAL_MANHWAS;

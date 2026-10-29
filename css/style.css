@@ -1,0 +1,59 @@
+@charset "UTF-8";
+
+/* Reset para evitar cualquier borde o separación en el Lector de Webtoon */
+#reader-images-container img {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  vertical-align: middle !important;
+  outline: none !important;
+}
+
+/* Scrollbar moderno estilizado */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #7c3aed;
+}
+
+/* Efectos de brillo de neón púrpura */
+.glow-purple {
+  box-shadow: 0 0 30px -5px rgba(147, 51, 234, 0.25);
+}
+
+.text-glow {
+  text-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+}
+
+/* Barra de progreso de lectura */
+#reader-progress-fill {
+  transition: width 0.1s linear;
+}
+
+/* Animaciones suaves */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+/* Modo pantalla completa limpio */
+:fullscreen #reader-view {
+  background-color: #09090b;
+}

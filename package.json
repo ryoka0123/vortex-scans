@@ -1,0 +1,13 @@
+{
+  "name": "manhwa-hub",
+  "version": "1.0.0",
+  "description": "Plataforma moderna y ultra rápida de lectura de Manhwa y Manga optimizada para alto tráfico",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["manhwa", "manga", "webtoon", "reader"],
+  "author": "",
+  "license": "MIT"
+}
