@@ -70,8 +70,21 @@ const Storage = {
 
     // Ordenar capítulos descendente
     item.chapters.sort((a, b) => b.number - a.number);
-    item.latestChapter = item.chapters[0].number;
-    item.updatedAt = 'Hace un momento';
+
+    // Obtener los capítulos públicos para calcular latestChapter de cara al público
+    const now = new Date();
+    const publicChapters = item.chapters.filter(c => {
+      if (c.status === 'draft') return false;
+      if (c.status === 'scheduled' && c.scheduledAt && new Date(c.scheduledAt) > now) return false;
+      return true;
+    });
+
+    if (publicChapters.length > 0) {
+      item.latestChapter = publicChapters[0].number;
+    }
+    if (chapter.status === 'published') {
+      item.updatedAt = 'Hace un momento';
+    }
 
     return this.saveManhwa(item);
   },

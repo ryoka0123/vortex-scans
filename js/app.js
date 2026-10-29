@@ -372,7 +372,14 @@ const App = {
     grid.innerHTML = filtered.map(m => {
       const isBookmarked = window.Storage.isBookmarked(m.id);
       const lastRead = window.Storage.getLastReadChapter(m.id);
-      const chapters = m.chapters || [];
+      const isAdmin = window.Auth && window.Auth.currentUser && (window.Auth.currentUser.role === 'admin' || window.Auth.currentUser.isAdmin || window.Auth.currentUser.role === 'Staff');
+      const now = new Date();
+      const chapters = (m.chapters || []).filter(c => {
+        if (isAdmin) return true;
+        if (c.status === 'draft') return false;
+        if (c.status === 'scheduled' && c.scheduledAt && new Date(c.scheduledAt) > now) return false;
+        return true;
+      });
       const latest2 = chapters.slice(0, 2);
 
       return `
@@ -608,25 +615,58 @@ const App = {
   },
 
   renderChapterItems(manhwa, chapters) {
-    if (chapters.length === 0) {
+    const isAdmin = window.Auth && window.Auth.currentUser && (window.Auth.currentUser.role === 'admin' || window.Auth.currentUser.isAdmin || window.Auth.currentUser.role === 'Staff');
+    const now = new Date();
+
+    // Filtrar capítulos que no deben ser visibles para usuarios comunes
+    const visibleChapters = chapters.filter(c => {
+      if (isAdmin) return true;
+      if (c.status === 'draft') return false;
+      if (c.status === 'scheduled' && c.scheduledAt && new Date(c.scheduledAt) > now) return false;
+      return true;
+    });
+
+    if (visibleChapters.length === 0) {
       return `<div class="col-span-full py-8 text-center text-zinc-500 text-xs">No hay capítulos disponibles todavía.</div>`;
     }
 
     const lastRead = window.Storage.getLastReadChapter(manhwa.id);
 
-    return chapters.map(c => `
-      <div onclick="Reader.open(App.getManhwaById('${manhwa.id}'), ${c.number})" class="flex items-center justify-between p-3 rounded-xl bg-zinc-950/70 hover:bg-purple-950/40 border border-zinc-800/80 hover:border-purple-500/40 cursor-pointer transition group">
-        <div class="min-w-0">
-          <div class="font-bold text-sm ${lastRead === c.number ? 'text-purple-400' : 'text-zinc-200'} group-hover:text-purple-300 truncate">
-            Capítulo ${c.number}
+    return visibleChapters.map(c => {
+      const isDraft = c.status === 'draft';
+      const isScheduled = c.status === 'scheduled' && c.scheduledAt && new Date(c.scheduledAt) > now;
+
+      return `
+        <div class="relative flex items-center justify-between p-3 rounded-xl ${isDraft ? 'bg-amber-950/20 border-amber-500/40' : (isScheduled ? 'bg-indigo-950/20 border-indigo-500/40' : 'bg-zinc-950/70 border-zinc-800/80 hover:bg-purple-950/40 hover:border-purple-500/40')} border transition group">
+          <div onclick="Reader.open(App.getManhwaById('${manhwa.id}'), ${c.number})" class="min-w-0 flex-1 cursor-pointer">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-sm ${lastRead === c.number ? 'text-purple-400' : 'text-zinc-200'} group-hover:text-purple-300 truncate">
+                Capítulo ${c.number}
+              </span>
+              ${isDraft ? `
+                <span class="px-1.5 py-0.5 text-[9px] font-black rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                  <span>🟡</span> BORRADOR OCULTO
+                </span>
+              ` : ''}
+              ${isScheduled ? `
+                <span class="px-1.5 py-0.5 text-[9px] font-black rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 flex items-center gap-1">
+                  <span>⏰</span> PROGRAMADO
+                </span>
+              ` : ''}
+            </div>
+            <div class="text-[11px] text-zinc-500 truncate mt-0.5">${c.title || 'Sin título'}</div>
           </div>
-          <div class="text-[11px] text-zinc-500 truncate">${c.title || 'Sin título'}</div>
+          <div class="flex items-center gap-2 text-right">
+            <span class="text-[11px] text-zinc-500">${c.date || 'Reciente'}</span>
+            ${isAdmin && (isDraft || isScheduled) ? `
+              <button onclick="event.stopPropagation(); Admin.publishDraft('${manhwa.id}', ${c.number})" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded-lg shadow transition" title="Hacer público este capítulo ahora mismo">
+                🚀 Publicar
+              </button>
+            ` : ''}
+          </div>
         </div>
-        <div class="text-right text-[11px] text-zinc-500">
-          ${c.date || 'Reciente'}
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   },
 
   filterChapters(manhwaId, query) {

@@ -289,6 +289,9 @@
       </div>
     </div>
 
+    <!-- Banner de Vista Previa para Administradores (Borrador / Oculto) -->
+    <div id="reader-admin-alert" class="hidden mt-16 max-w-4xl mx-auto px-4 py-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-300 text-xs font-bold flex flex-col sm:flex-row items-center justify-between gap-2 shadow-lg"></div>
+
     <!-- Contenedor Principal de Imágenes del Capítulo -->
     <div class="py-2 px-0 sm:px-2">
       <div id="reader-images-container" class="mx-auto transition-all duration-150"></div>
@@ -476,8 +479,48 @@
             <p class="text-[11px] text-zinc-500 mt-1">💡 Puedes pegar 50 o 100 enlaces aquí o usar el generador secuencial.</p>
           </div>
 
-          <button type="submit" class="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-purple-600/30 transition">
-            🚀 Publicar Capítulo Inmediatamente
+          <!-- Configuración de Visibilidad y Publicación -->
+          <div class="p-3.5 rounded-xl bg-zinc-950/90 border border-zinc-800 space-y-3">
+            <label class="block text-zinc-300 font-bold flex items-center gap-1.5">
+              <span>👁️ Visibilidad del Capítulo</span>
+              <span class="text-[10px] font-normal text-zinc-500">(Controla quién puede leerlo)</span>
+            </label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-purple-500/40 bg-purple-950/20 cursor-pointer hover:border-purple-500 transition">
+                <input type="radio" name="chapter-visibility" value="published" checked onchange="Admin.toggleScheduleField(false)" class="text-purple-600 focus:ring-purple-500">
+                <div>
+                  <div class="font-bold text-white text-[11px]">🟢 Público</div>
+                  <div class="text-[9px] text-zinc-400">Visible para todos</div>
+                </div>
+              </label>
+
+              <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-zinc-800 bg-zinc-900/60 cursor-pointer hover:border-amber-500/60 transition">
+                <input type="radio" name="chapter-visibility" value="draft" onchange="Admin.toggleScheduleField(false)" class="text-amber-500 focus:ring-amber-500">
+                <div>
+                  <div class="font-bold text-amber-400 text-[11px]">🟡 Borrador Oculto</div>
+                  <div class="text-[9px] text-zinc-400">Solo Staff / Admin</div>
+                </div>
+              </label>
+
+              <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-zinc-800 bg-zinc-900/60 cursor-pointer hover:border-indigo-500/60 transition">
+                <input type="radio" name="chapter-visibility" value="scheduled" onchange="Admin.toggleScheduleField(true)" class="text-indigo-500 focus:ring-indigo-500">
+                <div>
+                  <div class="font-bold text-indigo-400 text-[11px]">⏰ Programado</div>
+                  <div class="text-[9px] text-zinc-400">Estreno automático</div>
+                </div>
+              </label>
+            </div>
+
+            <!-- Campo de Fecha Programada (Oculto por defecto) -->
+            <div id="admin-schedule-container" class="hidden pt-2 border-t border-zinc-800/80">
+              <label class="block text-zinc-400 font-semibold mb-1">Fecha y Hora de Estreno Automático:</label>
+              <input type="datetime-local" id="admin-chapter-schedule-date" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500 font-mono">
+              <p class="text-[10px] text-zinc-500 mt-1">El capítulo permanecerá oculto al público hasta que llegue esta fecha.</p>
+            </div>
+          </div>
+
+          <button type="submit" id="admin-chapter-submit-btn" class="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-purple-600/30 transition">
+            🚀 Guardar Capítulo
           </button>
         </form>
       </div>
@@ -736,13 +779,13 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <!-- Scripts de la Aplicación (con cache buster) -->
-  <script src="js/config.js?v=2.4"></script>
-  <script src="js/data.js?v=2.4"></script>
+  <script src="js/config.js?v=2.5"></script>
+  <script src="js/data.js?v=2.5"></script>
   <script src="js/storage.js?v=2.5"></script>
-  <script src="js/auth.js?v=2.4"></script>
-  <script src="js/reader.js?v=2.4"></script>
-  <script src="js/admin.js?v=2.4"></script>
-  <script src="js/app.js?v=2.4"></script>
+  <script src="js/auth.js?v=2.5"></script>
+  <script src="js/reader.js?v=2.5"></script>
+  <script src="js/admin.js?v=2.5"></script>
+  <script src="js/app.js?v=2.5"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       // Carga el catálogo publicado (data/catalog.json). Si no existe, usa solo los datos de demo.
