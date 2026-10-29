@@ -94,14 +94,154 @@ const genreHref=g=>'#catalog?genre='+encodeURIComponent(g);
 const genreTags=genres=>(genres||[]).map(g=>`<a class="genre-tag" href="${genreHref(g)}">${esc(g)}</a>`).join('');
 const normalize=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 let catalogMode={favorite:false,genre:'',status:'Todos'};let catalogFiltersOpen=false;
-function popularSection(){const ranked=[...series].sort((a,b)=>(Number(b.views)||0)-(Number(a.views)||0));return `<section class="popular-section" aria-labelledby="popular-heading"><div class="section-title"><div><p class="eyebrow">LO MÁS LEÍDO EN ANGELSCAN</p><h2 id="popular-heading">Populares</h2><p class="muted">Las historias más visitadas de nuestra biblioteca.</p></div><div class="popular-actions"><a class="text-link" href="#popular">Ver todos ↗</a><button class="carousel-control" id="popular-prev" aria-label="Ver populares anteriores">←</button><button class="carousel-control" id="popular-next" aria-label="Ver siguientes populares">→</button></div></div><div class="popular-track" id="popular-track">${ranked.map((m,i)=>`<a class="popular-card" href="#series/${m.id}" data-views="${Number(m.views)||0}"><div class="cover-wrap">${cover(m)}<span class="popular-number">${String(i+1).padStart(2,'0')}</span><span class="popular-status"><i class="status-dot"></i>${esc(m.status)}</span></div><h3>${esc(m.title)}</h3><p class="muted">${count(m.views)} visitas · ${esc(m.type)}</p></a>`).join('')||'<p class="empty">Las historias aparecerán aquí cuando se publiquen.</p>'}</div></section>`;}
+function popularSection(){const ranked=[...series].sort((a,b)=>(Number(b.views)||0)-(Number(a.views)||0));return `<section class="popular-section" aria-labelledby="popular-heading"><div class="section-title"><div><p class="eyebrow"><span class="status-dot"></span> TOP SERIES</p><h2 id="popular-heading">Ranking Semanal</h2><p class="muted">Las historias más leídas de nuestra biblioteca.</p></div><div class="popular-actions"><a class="text-link" href="#ranking">Ver ranking completo ↗</a><button class="carousel-control" id="popular-prev" aria-label="Ver populares anteriores">←</button><button class="carousel-control" id="popular-next" aria-label="Ver siguientes populares">→</button></div></div><div class="popular-track" id="popular-track">${ranked.map((m,i)=>`<a class="popular-card" href="#series/${m.id}" data-views="${Number(m.views)||0}"><div class="cover-wrap">${cover(m)}<span class="popular-number">${String(i+1).padStart(2,'0')}</span><span class="popular-status"><i class="status-dot"></i>${esc(m.status)}</span></div><h3>${esc(m.title)}</h3><p class="muted">${count(m.views)} visitas · ${esc(m.type)}</p></a>`).join('')||'<p class="empty">Las historias aparecerán aquí cuando se publiquen.</p>'}</div></section>`;}
 function bindCarousel(){const track=$('#popular-track');if(!track)return;const update=()=>{$('#popular-prev').disabled=track.scrollLeft<=2;$('#popular-next').disabled=track.scrollLeft+track.clientWidth>=track.scrollWidth-2;};const step=direction=>track.scrollBy({left:direction*Math.max(190,track.clientWidth*.7),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});$('#popular-prev').onclick=()=>step(-1);$('#popular-next').onclick=()=>step(1);track.addEventListener('scroll',update,{passive:true});const observer=new ResizeObserver(()=>{if(!track.isConnected)return observer.disconnect();update();});observer.observe(track);requestAnimationFrame(update);}
 function home(){const hero=series.find(m=>m.featured)||series[0];const recent=[...series].sort(newestFirst);$('#app').innerHTML=`<div class="home-page">${hero?`<section class="hero"><div class="hero-art" role="img" aria-label="Ilustración de fantasía de la serie destacada" style="background-image:url('${image(hero.banner||hero.cover)}')"></div><div class="hero-content"><p class="eyebrow"><span class="status-dot"></span> LA ELECCIÓN DEL EQUIPO</p><p class="hero-kicker">Tu próxima obsesión.</p><h1>${esc(hero.title)}</h1><p class="hero-description">${esc(hero.synopsis)}</p><div class="tags">${genreTags(hero.genres.slice(0,3))}</div><a class="primary" href="#series/${hero.id}">Descubrir la historia <span>→</span></a></div><div class="hero-number">01 <span>/ ANGELSCAN SELECT</span></div></section>`:''}${popularSection()}<section class="recent-section"><div class="section-title"><div><p class="eyebrow">SIGUE LA HISTORIA</p><h2>Últimas actualizaciones</h2></div><a class="text-link" href="#catalog">Ver todas las series ↗</a></div><div class="card-grid recent-grid">${cards(recent)}</div></section></div>`;bindCarousel();}
 function catalogCards(list){return list.map(m=>`<article class="series-card catalog-card"><a class="series-card-link catalog-cover" href="#series/${m.id}"><div class="cover-wrap">${cover(m)}<span class="type-tag">${esc(m.type)}</span></div></a><div class="catalog-card-info"><a class="series-title" href="#series/${m.id}"><h3>${esc(m.title)}</h3></a><div class="catalog-card-meta"><span class="rating">★ ${esc(m.rating||'—')}</span><span class="series-state"><i class="status-dot"></i>${esc(m.status)}</span></div><div class="catalog-genres">${genreTags(m.genres.slice(0,2))}</div><div class="card-chapters">${[...m.chapters].sort((a,b)=>b.number-a.number).slice(0,3).map(c=>`<a href="#read/${m.id}/${c.number}"><span>Capítulo ${c.number}</span><span>Leer ↗</span></a>`).join('')||'<p class="muted">Próximamente</p>'}</div></div></article>`).join('')||'<div class="empty"><h3>No encontramos series con estos filtros.</h3><p>Prueba otro género o modifica la búsqueda.</p><a href="#catalog">Ver todas las series →</a></div>';}
 function catalogPage(favorite=false,params=new URLSearchParams()){catalogMode={favorite,genre:params.get('genre')||'',status:params.get('status')||'Todos'};filter=['Manhwa','Manhua','Manga'].includes(params.get('type'))?params.get('type'):'Todos';query=params.get('q')||'';const genres=[...new Set(series.flatMap(m=>m.genres||[]))].sort((a,b)=>a.localeCompare(b,'es'));$('#app').innerHTML=`<section class="catalog-page"><div class="series-page-heading"><p class="eyebrow">${favorite?'TU COLECCIÓN PERSONAL':'LA BIBLIOTECA DE ANGELSCAN'}</p><h1>${favorite?'Mi biblioteca':catalogMode.genre?esc(catalogMode.genre):'Catálogo'}</h1><p class="muted">${favorite?'Tus historias guardadas, listas para continuar.':catalogMode.genre?'Todas las historias del género '+esc(catalogMode.genre)+'.':'Explora manhwa, manhua y manga. Encuentra una historia para ti.'}</p></div><div class="catalog-search"><input id="search" type="search" placeholder="Buscar una historia, autor o género…" aria-label="Buscar historias" value="${esc(query)}"></div><div class="series-controls"><p id="results-count" class="muted" aria-live="polite"></p><div class="series-control-actions"><select id="sort" aria-label="Ordenar catálogo"><option value="updated">Últimas actualizaciones</option><option value="views">Más leídos</option><option value="title">Nombre: A–Z</option></select><button class="secondary filter-toggle" id="filter-toggle" aria-expanded="${catalogFiltersOpen}" aria-controls="filters-panel">☷ Filtros</button></div></div><section id="filters-panel" class="filters-panel" ${catalogFiltersOpen?'':'hidden'}><div><span class="filter-label">Tipo de serie</span><div class="tabs">${['Todos','Manhwa','Manhua','Manga'].map(t=>`<button data-filter="${t}" class="${filter===t?'active':''}">${t}</button>`).join('')}</div></div><label>Género<select id="genre-filter"><option value="">Todos los géneros</option>${genres.map(g=>`<option value="${esc(g)}" ${normalize(g)===normalize(catalogMode.genre)?'selected':''}>${esc(g)}</option>`).join('')}</select></label><label>Estado<select id="status-filter">${['Todos','En emisión','Finalizado','En pausa'].map(s=>`<option ${catalogMode.status===s?'selected':''}>${s}</option>`).join('')}</select></label><a class="text-link reset-filters" href="${favorite?'#favorites':'#catalog'}">Limpiar filtros</a></section><div class="active-filters" id="active-filters"></div><div class="card-grid series-directory" id="catalog-grid"></div></section>`;$('#sort').value=order;$('#sort').onchange=e=>{order=e.target.value;renderGrid();};$('#search').oninput=e=>{query=e.target.value;renderGrid();};$('#filter-toggle').onclick=()=>{const open=$('#filters-panel').hidden;catalogFiltersOpen=open;$('#filters-panel').hidden=!open;$('#filter-toggle').setAttribute('aria-expanded',String(open));};const updateFilter=(key,value)=>{const p=new URLSearchParams(location.hash.split('?')[1]||'');if(value&&value!=='Todos')p.set(key,value);else p.delete(key);if(query)p.set('q',query);location.hash=(favorite?'favorites':'catalog')+(p.size?'?'+p:'');};bind('[data-filter]','click',e=>updateFilter('type',e.currentTarget.dataset.filter));$('#genre-filter').onchange=e=>updateFilter('genre',e.target.value);$('#status-filter').onchange=e=>updateFilter('status',e.target.value);renderGrid();}
 function renderGrid(){let list=series.filter(m=>(!catalogMode.favorite||favorites().includes(m.id))&&(filter==='Todos'||m.type===filter)&&(!catalogMode.genre||(m.genres||[]).some(g=>normalize(g)===normalize(catalogMode.genre)))&&(catalogMode.status==='Todos'||m.status===catalogMode.status)&&normalize(`${m.title} ${m.author} ${(m.genres||[]).join(' ')}`).includes(normalize(query)));list.sort((a,b)=>order==='views'?(Number(b.views)||0)-(Number(a.views)||0):order==='title'?a.title.localeCompare(b.title,'es'):newestFirst(a,b));$('#catalog-grid').innerHTML=catalogCards(list);$('#results-count').textContent=list.length+(list.length===1?' serie encontrada':' series encontradas');$('#active-filters').innerHTML=[catalogMode.genre,filter!=='Todos'?filter:'',catalogMode.status!=='Todos'?catalogMode.status:''].filter(Boolean).map(v=>`<span>${esc(v)}</span>`).join('')+((catalogMode.genre||filter!=='Todos'||catalogMode.status!=='Todos')?`<a class="text-link" href="${catalogMode.favorite?'#favorites':'#catalog'}">Quitar filtros ×</a>`:'');}
-function popularPage(){$('#app').innerHTML=`<section class="popular-page"><div class="series-page-heading"><p class="eyebrow">EL RANKING DE ANGELSCAN</p><h1>Populares</h1><p class="muted">Las historias más visitadas, ordenadas por sus lecturas en el sitio.</p></div><div class="card-grid recent-grid">${cards([...series].sort((a,b)=>(Number(b.views)||0)-(Number(a.views)||0)))}</div></section>`;}
-function route(){const hash=location.hash.slice(1)||'home';const [path,search='']=hash.split('?');const [view,id,num]=path.split('/');const params=new URLSearchParams(search);if(view==='admin')admin();else if(view==='series')detail(id);else if(view==='read')reader(id,num);else if(view==='catalog')catalogPage(false,params);else if(view==='favorites')catalogPage(true,params);else if(view==='popular')popularPage();else home();document.querySelectorAll('.site-header nav a').forEach(a=>{const active=a.getAttribute('href')==='#'+(view==='series'||view==='read'?'catalog':view);a.classList.toggle('current',active);if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});window.scrollTo(0,0);}
+
+let rankingPeriod='weekly';
+let rankingType='Todos';
+
+function rankingPage(params=new URLSearchParams()){
+  const period=params.get('period')||rankingPeriod||'weekly';
+  const type=params.get('type')||rankingType||'Todos';
+  rankingPeriod=period;
+  rankingType=type;
+
+  let list=series.filter(s=>type==='Todos'||s.type===type);
+
+  if(period==='rating'){
+    list.sort((a,b)=>(Number(b.rating)||0)-(Number(a.rating)||0));
+  }else if(period==='monthly'){
+    list.sort((a,b)=>((Number(b.views)||0)*1.5+(Number(b.rating)||0)*10)-((Number(a.views)||0)*1.5+(Number(a.rating)||0)*10));
+  }else if(period==='weekly'){
+    list.sort((a,b)=>((Number(b.views)||0)*2+(Number(b.rating)||0)*20+b.chapters.length)-((Number(a.views)||0)*2+(Number(a.rating)||0)*20+a.chapters.length));
+  }else{
+    list.sort((a,b)=>(Number(b.views)||0)-(Number(a.views)||0));
+  }
+
+  const top3=list.slice(0,3);
+  const rest=list.slice(3);
+
+  $('#app').innerHTML=`
+    <section class="ranking-page">
+      <div class="ranking-header">
+        <p class="eyebrow"><span class="status-dot"></span> CLASIFICACIÓN DE ANGELSCAN</p>
+        <h1>Ranking Top Series</h1>
+        <p class="muted">Las historias más leídas, valoradas y comentadas por nuestra comunidad.</p>
+      </div>
+
+      <div class="ranking-filters-bar">
+        <div class="ranking-period-tabs">
+          <button class="rank-tab ${period==='weekly'?'active':''}" onclick="setRankingFilter('period','weekly')">Semanal</button>
+          <button class="rank-tab ${period==='monthly'?'active':''}" onclick="setRankingFilter('period','monthly')">Mensual</button>
+          <button class="rank-tab ${period==='all'?'active':''}" onclick="setRankingFilter('period','all')">Histórico</button>
+          <button class="rank-tab ${period==='rating'?'active':''}" onclick="setRankingFilter('period','rating')">Mejor Valorados</button>
+        </div>
+        <div class="ranking-type-tabs">
+          ${['Todos','Manhwa','Manga','Manhua'].map(t=>`
+            <button class="rank-pill ${type===t?'active':''}" onclick="setRankingFilter('type','${t}')">${t}</button>
+          `).join('')}
+        </div>
+      </div>
+
+      ${top3.length>0?`
+        <div class="ranking-podium">
+          ${top3.map((m,idx)=>{
+            const rank=idx+1;
+            const rankLabel=rank===1?'🥇 Top 1':rank===2?'🥈 Top 2':'🥉 Top 3';
+            const badgeClass=rank===1?'gold-rank':rank===2?'silver-rank':'bronze-rank';
+            const latestCap=m.chapters.length?Math.max(...m.chapters.map(c=>c.number)):null;
+            return `
+              <div class="podium-card ${badgeClass}">
+                <div class="podium-rank-badge">${rankLabel}</div>
+                <a class="podium-cover-wrap" href="#series/${m.id}">
+                  ${cover(m,'podium-cover')}
+                  <span class="podium-rank-num">#${rank}</span>
+                </a>
+                <div class="podium-info">
+                  <div class="podium-meta">
+                    <span class="search-result-tag">${esc(m.type)}</span>
+                    <span class="podium-rating">★ ${esc(m.rating||'-')}</span>
+                  </div>
+                  <a class="podium-title" href="#series/${m.id}"><h3>${esc(m.title)}</h3></a>
+                  <p class="podium-stats">${count(m.views)} lecturas · ${m.chapters.length} capítulos</p>
+                  ${latestCap!=null?`
+                    <a class="podium-read-btn" href="#read/${m.id}/${latestCap}">Leer Cap. ${latestCap} →</a>
+                  `:''}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `:''}
+
+      ${rest.length>0?`
+        <div class="ranking-table">
+          <div class="ranking-table-header">
+            <span class="col-rank">#</span>
+            <span class="col-series">Serie</span>
+            <span class="col-rating">Puntuación</span>
+            <span class="col-views">Lecturas</span>
+            <span class="col-action">Acción</span>
+          </div>
+          ${rest.map((m,idx)=>{
+            const rank=idx+4;
+            const latestCap=m.chapters.length?Math.max(...m.chapters.map(c=>c.number)):null;
+            return `
+              <div class="ranking-table-row">
+                <div class="col-rank">
+                  <span class="rank-number-text">${String(rank).padStart(2,'0')}</span>
+                </div>
+                <div class="col-series">
+                  <a class="row-cover-wrap" href="#series/${m.id}">
+                    <img class="row-cover" src="${image(m.cover)}" alt="${esc(m.title)}" loading="lazy">
+                  </a>
+                  <div class="row-series-info">
+                    <a class="row-title" href="#series/${m.id}">${esc(m.title)}</a>
+                    <div class="row-tags">
+                      <span class="search-result-tag">${esc(m.type)}</span>
+                      <span class="muted">${esc(m.status)}</span>
+                      <span class="muted">· ${m.genres.slice(0,2).join(', ')}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-rating">
+                  <span class="rating-badge">★ ${esc(m.rating||'-')}</span>
+                </div>
+                <div class="col-views">
+                  <span class="views-text">${count(m.views)} lecturas</span>
+                </div>
+                <div class="col-action">
+                  ${latestCap!=null?`
+                    <a class="row-read-link" href="#read/${m.id}/${latestCap}">Cap. ${latestCap} →</a>
+                  `:'<span class="muted">Próx.</span>'}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `:''}
+
+      ${list.length===0?`
+        <div class="empty">
+          <h3>No hay historias que coincidan con este filtro.</h3>
+          <p>Prueba a seleccionar otro tipo o periodo.</p>
+        </div>
+      `:''}
+    </section>
+  `;
+}
+
+window.setRankingFilter=function(key,val){
+  const params=new URLSearchParams(location.hash.split('?')[1]||'');
+  params.set(key,val);
+  location.hash='ranking?'+params.toString();
+};
+
+function route(){const hash=location.hash.slice(1)||'home';const [path,search='']=hash.split('?');const [view,id,num]=path.split('/');const params=new URLSearchParams(search);if(view==='admin')admin();else if(view==='series')detail(id);else if(view==='read')reader(id,num);else if(view==='catalog')catalogPage(false,params);else if(view==='favorites')catalogPage(true,params);else if(view==='ranking'||view==='popular')rankingPage(params);else home();document.querySelectorAll('.site-header nav a').forEach(a=>{const target=a.getAttribute('href');const active=target==='#'+(view==='series'||view==='read'?'catalog':view==='popular'?'ranking':view);a.classList.toggle('current',active);if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});window.scrollTo(0,0);}
 
 function renderUserSlot(){
   const slot=$('#user-auth-slot');
