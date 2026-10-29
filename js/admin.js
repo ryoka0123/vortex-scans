@@ -124,18 +124,8 @@ const Admin = {
             ${m.status}
           </span>
         </td>
-        <td class="py-3 px-4 font-mono text-xs">
-          <div class="text-purple-400 font-bold">${m.chapters ? m.chapters.length : 0} caps</div>
-          ${m.chapters && m.chapters.filter(c => c.status === 'draft').length > 0 ? `
-            <div class="text-[10px] text-amber-400 font-semibold flex items-center gap-1 mt-0.5">
-              <span>🟡</span> ${m.chapters.filter(c => c.status === 'draft').length} oculto(s)
-            </div>
-          ` : ''}
-          ${m.chapters && m.chapters.filter(c => c.status === 'scheduled').length > 0 ? `
-            <div class="text-[10px] text-indigo-400 font-semibold flex items-center gap-1 mt-0.5">
-              <span>⏰</span> ${m.chapters.filter(c => c.status === 'scheduled').length} prog.
-            </div>
-          ` : ''}
+        <td class="py-3 px-4 font-mono text-sm text-purple-400">
+          ${m.chapters ? m.chapters.length : 0} caps
         </td>
         <td class="py-3 px-4 text-xs text-zinc-400">
           ${m.updatedAt || 'Reciente'}
@@ -254,43 +244,6 @@ const Admin = {
     document.getElementById('admin-chapter-form').scrollIntoView({ behavior: 'smooth' });
   },
 
-  toggleScheduleField(show) {
-    const container = document.getElementById('admin-schedule-container');
-    if (!container) return;
-    if (show) {
-      container.classList.remove('hidden');
-    } else {
-      container.classList.add('hidden');
-    }
-  },
-
-  publishDraft(seriesId, chapterNumber) {
-    const list = window.Storage.getAllManhwas();
-    const item = list.find(m => m.id === seriesId);
-    if (!item || !item.chapters) return;
-    const chap = item.chapters.find(c => c.number === Number(chapterNumber));
-    if (!chap) return;
-
-    chap.status = 'published';
-    chap.date = 'Hace un momento';
-    chap.scheduledAt = null;
-
-    // Actualizar latestChapter con los publicados
-    const published = item.chapters.filter(c => c.status !== 'draft');
-    if (published.length > 0) {
-      item.latestChapter = Math.max(...published.map(c => c.number));
-    }
-    item.updatedAt = 'Hace un momento';
-
-    window.Storage.saveManhwa(item);
-    alert(`🎉 ¡El Capítulo ${chapterNumber} ahora es público y visible para todos los lectores!`);
-    this.renderSeriesTable();
-    window.App.refreshData();
-    if (window.App.currentManhwa && window.App.currentManhwa.id === seriesId) {
-      window.App.showManhwaDetail(seriesId);
-    }
-  },
-
   saveChapterFromForm() {
     const seriesId = document.getElementById('admin-chapter-series-select').value;
     if (!seriesId) return alert('Por favor selecciona una serie');
@@ -308,42 +261,24 @@ const Admin = {
 
     if (pages.length === 0) return alert('No se encontraron imágenes válidas');
 
-    // Estado de visibilidad (Public, Draft, Scheduled)
-    const visibilityRadio = document.querySelector('input[name="chapter-visibility"]:checked');
-    const visibility = visibilityRadio ? visibilityRadio.value : 'published';
-    const scheduleDate = document.getElementById('admin-chapter-schedule-date')?.value || null;
-
-    if (visibility === 'scheduled' && !scheduleDate) {
-      return alert('Por favor selecciona la fecha y hora para el estreno automático programado.');
-    }
-
     const chapter = {
       id: `${seriesId}-cap-${number}`,
       number,
       title: title || `Capítulo ${number}`,
-      date: visibility === 'scheduled' ? `⏰ Estreno: ${new Date(scheduleDate).toLocaleDateString()}` : (visibility === 'draft' ? '🟡 Borrador' : 'Hace un momento'),
-      status: visibility, // 'published' | 'draft' | 'scheduled'
-      scheduledAt: visibility === 'scheduled' ? scheduleDate : null,
+      date: 'Hace un momento',
       pages
     };
 
     const success = window.Storage.addChapter(seriesId, chapter);
     if (success) {
-      const msg = visibility === 'draft' 
-        ? `🟡 ¡Capítulo ${number} guardado como BORRADOR OCULTO!\n\nLos visitantes normales NO lo verán. Solo tú como Administrador puedes verlo y revisarlo.`
-        : (visibility === 'scheduled' 
-            ? `⏰ ¡Capítulo ${number} PROGRAMADO con éxito!\n\nSe estrenará automáticamente el ${new Date(scheduleDate).toLocaleString()}.`
-            : `✅ ¡Capítulo ${number} publicado con éxito (${pages.length} páginas)! Ya es visible para todo el público.`);
-      alert(msg);
-
+      alert(`✅ ¡Capítulo ${number} publicado con éxito (${pages.length} páginas)!`);
       document.getElementById('admin-chapter-form').reset();
-      this.toggleScheduleField(false);
       document.getElementById('admin-upload-status').textContent = '';
       this.renderSeriesTable();
       this.populateSeriesSelect();
       window.App.refreshData();
     } else {
-      alert('Error al guardar el capítulo');
+      alert('Error al publicar el capítulo');
     }
   },
 

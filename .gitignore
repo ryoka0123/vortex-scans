@@ -1,17 +1,12 @@
-# Dependencies
 node_modules/
-package-lock.json
-
-# Environment & credentials
+test-results/
+playwright-report/
 .env
-*.pem
-*.key
+*.tmp
+data/test-catalog.json
 
-# Logs
-logs/
-*.log
-npm-debug.log*
+data/*.comments.json
 
-# OS Files
-.DS_Store
-Thumbs.db
+.env*
+!.env.example
+.vercel/

@@ -73,18 +73,6 @@ const Reader = {
       alert('Capítulo no encontrado');
       return;
     }
-
-    // Comprobar si el capítulo está en borrador o programado
-    const isAdmin = window.Auth && window.Auth.currentUser && (window.Auth.currentUser.role === 'admin' || window.Auth.currentUser.isAdmin || window.Auth.currentUser.role === 'Staff');
-    const now = new Date();
-    const isDraft = chap.status === 'draft';
-    const isScheduled = chap.status === 'scheduled' && chap.scheduledAt && new Date(chap.scheduledAt) > now;
-
-    if (!isAdmin && (isDraft || isScheduled)) {
-      alert('🔒 Este capítulo aún está en modo borrador o programado para un estreno próximo. ¡Vuelve pronto!');
-      return;
-    }
-
     this.currentChapter = chap;
     this.currentPageIndex = 0;
 
@@ -106,47 +94,16 @@ const Reader = {
   render() {
     const manhwa = this.currentManhwa;
     const chapter = this.currentChapter;
-    const isAdmin = window.Auth && window.Auth.currentUser && (window.Auth.currentUser.role === 'admin' || window.Auth.currentUser.isAdmin || window.Auth.currentUser.role === 'Staff');
-    const now = new Date();
-    const isDraft = chapter.status === 'draft';
-    const isScheduled = chapter.status === 'scheduled' && chapter.scheduledAt && new Date(chapter.scheduledAt) > now;
 
     // Actualizar encabezados
     document.getElementById('reader-series-title').textContent = manhwa.title;
     document.getElementById('reader-chapter-title').textContent = `Capítulo ${chapter.number}${chapter.title ? ' - ' + chapter.title : ''}`;
 
-    // Banner de advertencia si es borrador visto por un Administrador
-    const adminAlert = document.getElementById('reader-admin-alert');
-    if (adminAlert) {
-      if (isAdmin && (isDraft || isScheduled)) {
-        adminAlert.classList.remove('hidden');
-        adminAlert.innerHTML = `
-          <div class="flex items-center gap-2">
-            <span class="text-base">${isDraft ? '🟡' : '⏰'}</span>
-            <span>MODO VISTA PREVIA DE STAFF: Este capítulo está ${isDraft ? 'en BORRADOR OCULTO' : 'PROGRAMADO'} y los lectores comunes NO pueden verlo.</span>
-          </div>
-          <button onclick="Admin.publishDraft('${manhwa.id}', ${chapter.number})" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg shadow transition">
-            🚀 Publicar Ahora
-          </button>
-        `;
-      } else {
-        adminAlert.classList.add('hidden');
-        adminAlert.innerHTML = '';
-      }
-    }
-
-    // Llenar selector de capítulos (filtrando para usuarios comunes)
+    // Llenar selector de capítulos
     const select = document.getElementById('reader-chapter-select');
-    const visibleChapters = manhwa.chapters.filter(c => {
-      if (isAdmin) return true;
-      if (c.status === 'draft') return false;
-      if (c.status === 'scheduled' && c.scheduledAt && new Date(c.scheduledAt) > now) return false;
-      return true;
-    });
-
-    select.innerHTML = visibleChapters.map(c => `
+    select.innerHTML = manhwa.chapters.map(c => `
       <option value="${c.number}" ${c.number === chapter.number ? 'selected' : ''}>
-        Capítulo ${c.number}: ${c.title || 'Sin título'} ${c.status === 'draft' ? '🟡 (Borrador)' : (c.status === 'scheduled' ? '⏰ (Prog.)' : '')}
+        Capítulo ${c.number}: ${c.title || 'Sin título'}
       </option>
     `).join('');
 
