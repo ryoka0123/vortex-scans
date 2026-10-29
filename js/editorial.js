@@ -122,11 +122,11 @@ function renderUserSlot(){
           <div class="user-dropdown-header">
             <strong style="color:#fff">${esc(currentUser.username)}</strong>
             <div style="font-size:11px;color:#8b9298;margin-top:2px">${esc(currentUser.email)}</div>
-            <div style="font-size:10px;color:var(--accent,#a0e8f2);margin-top:4px">${isAdmin?'⚡ Administrador':'✨ Lector'}</div>
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.3px;color:var(--accent,#a0e8f2);margin-top:4px">${isAdmin?'Administrador':'Lector'}</div>
           </div>
           <hr class="dropdown-sep">
-          ${isAdmin?'<a href="#admin" class="dropdown-item admin-highlight">⚙️ Panel de Control</a>':''}
-          <a href="#favorites" class="dropdown-item">⭐ Mi biblioteca</a>
+          ${isAdmin?'<a href="#admin" class="dropdown-item admin-highlight">Panel de Control</a>':''}
+          <a href="#favorites" class="dropdown-item">Mi biblioteca</a>
           <button onclick="handleLogout()" class="dropdown-item logout-btn">Cerrar sesión</button>
         </div>
       </div>
