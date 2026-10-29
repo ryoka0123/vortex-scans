@@ -469,6 +469,18 @@
   color: #6b7280;
   font-size: 14px;
   pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  transition: color 0.2s;
+}
+.input-icon svg {
+  display: block;
+}
+.input-with-icon:focus-within .input-icon {
+  color: var(--accent);
 }
 .input-with-icon input {
   width: 100%;
