@@ -23,14 +23,43 @@
 @media(max-width:520px){.hero-art{background-position:66% center}.hero{min-height:470px}.hero-content{padding:25px}.hero h1{font-size:38px}.card-chapters a{font-size:10px;padding:9px 8px}.hero-description{-webkit-line-clamp:3}.hero-kicker{margin-top:32px}.hero .eyebrow{font-size:9px}}
 @media(min-width:801px){.hero-art{background-position:center top}}
 /* AngelScan identity */
-.site-header{gap:48px;min-height:94px;height:auto}
+.site-header{gap:24px;min-height:84px;height:auto;justify-content:space-between;position:sticky;top:0;z-index:90;backdrop-filter:blur(14px);background:rgba(16,18,20,0.94)}
+.header-left{display:flex;align-items:center;gap:32px}
+.header-nav{display:flex;align-items:center;gap:24px;color:#bfc3c1;font-weight:500}
+.header-right{display:flex;align-items:center;gap:12px}
+.discord-header-btn{display:inline-flex;align-items:center;gap:8px;background:#14171a;border:1px solid #282d33;color:#c7cbcf;padding:8px 16px;border-radius:9999px;font-size:13px;font-weight:600;text-decoration:none;transition:all .2s ease}
+.discord-header-btn svg{color:#5865F2;transition:transform .2s;flex-shrink:0}
+.discord-header-btn:hover{background:rgba(88,101,242,.14);border-color:#5865F2;color:#fff;box-shadow:0 0 16px rgba(88,101,242,.3);transform:translateY(-1px)}
+.discord-header-btn:hover svg{transform:scale(1.12)}
+.header-search-wrap{position:relative;flex:1;max-width:420px;margin:0 16px}
+.header-search-bar{display:flex;align-items:center;gap:10px;background:#14171a;border:1px solid #262b30;border-radius:9999px;padding:0 14px;height:42px;transition:border-color .2s,box-shadow .2s,background .2s}
+.header-search-bar:focus-within{border-color:var(--accent);background:#171c21;box-shadow:0 0 0 2px rgba(160,232,242,.2),0 4px 20px rgba(0,0,0,.5)}
+.header-search-bar .search-icon{color:#6b7280;flex-shrink:0;transition:color .2s}
+.header-search-bar:focus-within .search-icon{color:var(--accent)}
+.header-search-bar input{background:transparent!important;border:0!important;padding:0!important;color:#f3f4f6;font-size:13px;width:100%;outline:none!important;box-shadow:none!important}
+.header-search-bar input::placeholder{color:#6b7280}
+.search-kbd{background:#1e2328;border:1px solid #323840;border-radius:4px;color:#8b9298;font-size:11px;font-family:inherit;padding:2px 7px;line-height:1;pointer-events:none}
+.header-search-results{position:absolute;top:calc(100% + 8px);left:0;right:0;background:#14171a;border:1px solid #2a3036;border-radius:14px;padding:8px;box-shadow:0 16px 40px rgba(0,0,0,.7),0 0 24px rgba(160,232,242,.08);z-index:100;max-height:420px;overflow-y:auto}
+.search-result-item{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:8px;text-decoration:none;color:#f3f4f6;transition:background .15s}
+.search-result-item:hover{background:#1c2126}
+.search-result-thumb{width:36px;height:50px;border-radius:4px;object-fit:cover;background:#252a30;flex-shrink:0}
+.search-result-info{flex:1;min-width:0}
+.search-result-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;color:#f3f4f6}
+.search-result-item:hover .search-result-title{color:var(--accent)}
+.search-result-meta{font-size:11px;color:#8b9298;display:flex;gap:8px;align-items:center}
+.search-result-tag{background:rgba(160,232,242,.12);color:var(--accent);font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px}
+.search-no-results{padding:18px 14px;text-align:center;color:#8b9298;font-size:13px}
+.search-view-all{display:block;text-align:center;padding:10px;font-size:12px;font-weight:600;color:var(--accent);border-top:1px solid #23282e;margin-top:4px;text-decoration:none}
+.search-view-all:hover{text-decoration:underline}
+@media(max-width:1050px){.header-search-wrap{max-width:280px;margin:0 10px}.header-left{gap:20px}.header-nav{gap:16px}}
+@media(max-width:860px){.discord-label{display:none}.discord-header-btn{padding:8px 10px}}
+@media(max-width:760px){.site-header{flex-wrap:wrap;gap:10px 14px;padding-top:10px;padding-bottom:12px;min-height:auto}.header-search-wrap{order:3;flex-basis:100%;max-width:100%;margin:4px 0 0}.search-kbd{display:none}.header-nav{font-size:12px;gap:12px}.brand-logo{width:46px;height:52px}.brand .brand-word{font-size:22px}}
 .brand{gap:12px;letter-spacing:-.8px}
 .brand-logo{width:62px;height:68px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 0 10px #70d8f01a)}
 .brand .brand-word{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:25px;color:#f1f7fa;letter-spacing:-1px}
 .brand .brand-word>span{color:#a0e8f2;font-weight:500}
 .site-footer .brand-logo{width:44px;height:50px}
 .site-footer .brand .brand-word{font-size:21px}
-@media(max-width:800px){.site-header{gap:12px 18px;padding-top:9px;padding-bottom:15px}.site-header nav{margin-top:0}.brand-logo{width:50px;height:58px}.brand .brand-word{font-size:23px}.site-header>.quiet{font-size:10px;padding-right:0}}
 
 /* Series directory, popular stories and navigable genre tags. */
 .site-header nav a.current{color:var(--accent)}

@@ -107,13 +107,13 @@ function renderUserSlot(){
   const slot=$('#user-auth-slot');
   if(!slot)return;
   if(!currentUser){
-    slot.innerHTML=`<button class="auth-pill-btn" onclick="openAuthModal('login')"><span>👤</span> <span>Entrar</span></button>`;
+    slot.innerHTML=`<button class="auth-pill-btn" onclick="openAuthModal('login')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> <span>Entrar</span></button>`;
   }else{
     const isAdmin=currentUser.role==='admin';
     slot.innerHTML=`
       <div class="user-profile-menu">
         <button class="user-pill-btn" onclick="toggleUserDropdown()" aria-expanded="false">
-          <span style="font-size:15px">👤</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
           <span class="user-name-text">${esc(currentUser.username)}</span>
           ${isAdmin?'<span class="admin-badge">ADMIN</span>':''}
           <span style="font-size:9px;color:#8b9298">▼</span>
@@ -255,6 +255,81 @@ function bindAuthForms(){
   }
 }
 
+function bindGlobalSearch(){
+  const wrap=$('#header-search-wrap');
+  const input=$('#global-search-input');
+  const results=$('#header-search-results');
+  if(!wrap||!input||!results)return;
+
+  function renderResults(q){
+    const query=q.trim().toLowerCase();
+    if(!query){
+      results.style.display='none';
+      results.innerHTML='';
+      return;
+    }
+    const matches=series.filter(s=>
+      s.title.toLowerCase().includes(query)||
+      (s.altTitles&&s.altTitles.toLowerCase().includes(query))||
+      (s.genres&&s.genres.some(g=>g.toLowerCase().includes(query)))
+    ).slice(0,5);
+
+    if(matches.length===0){
+      results.innerHTML=`<div class="search-no-results">No se encontraron series para "${esc(q)}"</div>`;
+    }else{
+      results.innerHTML=matches.map(m=>`
+        <a class="search-result-item" href="#series/${m.id}">
+          <img class="search-result-thumb" src="${image(m.cover)}" alt="${esc(m.title)}" loading="lazy">
+          <div class="search-result-info">
+            <div class="search-result-title">${esc(m.title)}</div>
+            <div class="search-result-meta">
+              <span class="search-result-tag">${esc(m.type)}</span>
+              <span>⭐ ${esc(m.rating||'-')}</span>
+              <span>${m.chapters.length} caps</span>
+            </div>
+          </div>
+        </a>
+      `).join('')+`
+        <a class="search-view-all" href="#catalog?q=${encodeURIComponent(query)}">Ver todos los resultados en el catálogo →</a>
+      `;
+    }
+    results.style.display='block';
+  }
+
+  input.addEventListener('input',e=>renderResults(e.target.value));
+  input.addEventListener('focus',()=>{if(input.value.trim())renderResults(input.value);});
+
+  input.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){
+      const q=input.value.trim();
+      results.style.display='none';
+      location.hash=q?'#catalog?q='+encodeURIComponent(q):'#catalog';
+    }else if(e.key==='Escape'){
+      results.style.display='none';
+    }
+  });
+
+  results.addEventListener('click',e=>{
+    if(e.target.closest('a')){
+      results.style.display='none';
+      input.value='';
+    }
+  });
+
+  document.addEventListener('click',e=>{
+    if(!wrap.contains(e.target)){
+      results.style.display='none';
+    }
+  });
+
+  window.addEventListener('keydown',e=>{
+    if(e.key==='/'&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)){
+      e.preventDefault();
+      input.focus();
+    }
+  });
+}
+
 window.addEventListener('hashchange',route);
 window.addEventListener('keydown',e=>{
   if(e.ctrlKey&&e.shiftKey&&(e.key==='A'||e.key==='a')){
@@ -267,6 +342,7 @@ Promise.all([api('catalog'),api('session')]).then(([data,session])=>{
   currentUser=session.user;
   renderUserSlot();
   bindAuthForms();
+  bindGlobalSearch();
   route();
 }).catch(e=>{
   $('#app').innerHTML='<div class="empty"><h1>No se pudo abrir la biblioteca.</h1><p>Comprueba que el servidor esté en marcha y recarga la página.</p></div>';
