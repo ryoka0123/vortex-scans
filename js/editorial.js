@@ -10,7 +10,198 @@ function toast(s){$('#toast').textContent=s;$('#toast').classList.add('visible')
 function bind(selector,event,fn){document.querySelectorAll(selector).forEach(el=>el.addEventListener(event,fn));}
 function cards(list){return list.map(m=>`<article class="series-card"><a class="series-card-link" href="#series/${m.id}"><div class="cover-wrap">${cover(m)}<span class="type-tag">${esc(m.type)}</span><span class="cover-arrow">↗</span></div><p class="card-meta">${esc(m.genres?.[0]||m.type)} <span>★ ${esc(m.rating||'—')}</span></p><h3>${esc(m.title)}</h3><p class="muted">${m.chapters.length?`Capítulo ${m.latestChapter}`:'Próximamente'} <span class="status-dot"></span></p></a><div class="card-chapters">${[...m.chapters].sort((a,b)=>b.number-a.number).slice(0,2).map(c=>`<a href="#read/${m.id}/${c.number}"><span>Capítulo ${c.number}</span><span>Leer ↗</span></a>`).join('')}</div></article>`).join('')||'<div class="empty"><h3>Aún no hay historias aquí.</h3><p>Prueba otra búsqueda o explora todos los títulos.</p></div>';}
 function detail(id){const m=series.find(m=>m.id===id);if(!m)return missing();current=m;api(`series/${id}/view`,'POST',{}).then(v=>m.views=v.views).catch(()=>{});const history=JSON.parse(localStorage.getItem('vortex-progress')||'{}')[id];$('#app').innerHTML=`<a class="back" href="#home">← Volver a explorar</a><section class="detail"><div>${cover(m,'detail-cover')}</div><div><p class="eyebrow"><a class="type-link" href="#catalog?type=${encodeURIComponent(m.type)}">${esc(m.type)}</a> / ${esc(m.status)}</p><h1>${esc(m.title)}</h1><p class="muted">${esc(m.altTitles||'')}</p><div class="tags">${genreTags(m.genres)}</div><p class="synopsis">${esc(m.synopsis)}</p><p class="muted">${esc(m.author||'Autor por confirmar')} · ★ ${esc(m.rating||'—')} · ${count(m.views)} visitas</p>${m.demo?'<p class="demo-note">Ficha de demostración. Las páginas de muestra no son capítulos reales.</p>':''}<div class="actions">${m.chapters.length?`<a class="primary" href="#read/${id}/${history??Math.min(...m.chapters.map(c=>c.number))}">${history!=null?'Continuar lectura':'Empezar a leer'} →</a>`:''}<button id="bookmark" class="secondary">${favorites().includes(id)?'✓ En tu biblioteca':'+ Guardar en biblioteca'}</button></div></div></section><section class="chapters"><div class="section-title"><h2>Capítulos <small>${m.chapters.length}</small></h2><input id="chapter-search" type="search" placeholder="Buscar capítulo" aria-label="Buscar capítulo"></div><div id="chapter-list"></div></section>${window.seriesCommentsMarkup(id,m.title)}`;const list=q=>$('#chapter-list').innerHTML=[...m.chapters].sort((a,b)=>b.number-a.number).filter(c=>`${c.number} ${c.title}`.toLowerCase().includes(q.toLowerCase())).map(c=>`<a class="chapter-row" href="#read/${id}/${c.number}"><span><b>Capítulo ${c.number}</b> ${esc(c.title)}</span><span>Leer →</span></a>`).join('')||'<p class="empty">No hay capítulos disponibles.</p>';list('');window.mountSeriesComments(id);$('#chapter-search').oninput=e=>list(e.target.value);$('#bookmark').onclick=()=>{let f=favorites();f=f.includes(id)?f.filter(x=>x!==id):[...f,id];localStorage.setItem('vortex-favorites',JSON.stringify(f));$('#bookmark').textContent=f.includes(id)?'✓ En tu biblioteca':'+ Guardar en biblioteca';};}
-function reader(id,number){const m=series.find(m=>m.id===id),c=m?.chapters.find(c=>c.number===Number(number));if(!c)return missing();let progress=JSON.parse(localStorage.getItem('vortex-progress')||'{}');progress[id]=c.number;localStorage.setItem('vortex-progress',JSON.stringify(progress));const chapters=[...m.chapters].sort((a,b)=>a.number-b.number),i=chapters.findIndex(x=>x.number===c.number);$('#app').innerHTML=`<section class="reader"><div class="reader-tools"><a href="#series/${id}">← ${esc(m.title)}</a><select id="chapter-select" aria-label="Cambiar capítulo">${chapters.map(ch=>`<option value="${ch.number}" ${ch.number===c.number?'selected':''}>Capítulo ${ch.number}</option>`).join('')}</select><select id="reader-width" aria-label="Ancho de lectura"><option value="800">Ancho normal</option><option value="600">Compacto</option><option value="1100">Amplio</option></select></div>${m.demo?'<p class="demo-note">Páginas de demostración</p>':''}<div class="reader-pages">${c.pages.map((p,i)=>`<img src="${image(p)}" alt="Página ${i+1} de ${esc(c.title)}" loading="${i<2?'eager':'lazy'}" onerror="this.alt='No se pudo cargar la página ${i+1}'">`).join('')}</div><div class="reader-nav">${i>0?`<a class="secondary" href="#read/${id}/${chapters[i-1].number}">← Anterior</a>`:'<span></span>'}<a href="#series/${id}">Todos los capítulos</a>${i<chapters.length-1?`<a class="primary" href="#read/${id}/${chapters[i+1].number}">Siguiente →</a>`:'<span>Estás al día ✓</span>'}</div></section>`;$('#chapter-select').onchange=e=>location.hash=`read/${id}/${e.target.value}`;$('#reader-width').onchange=e=>$('.reader-pages').style.maxWidth=e.target.value+'px';}
+function getReactions(seriesId, chapterNum){
+  const key=`angelscan-react-${seriesId}-${chapterNum}`;
+  try{
+    const saved=JSON.parse(localStorage.getItem(key)||'null');
+    if(saved) return saved;
+  }catch{}
+  const seed=(seriesId.charCodeAt(0)+Number(chapterNum)*7)%50;
+  return {
+    userReaction:null,
+    counts:{
+      like:16+seed,
+      love:92+seed*2,
+      laugh:7+Math.floor(seed/3),
+      wow:28+seed,
+      sad:3+Math.floor(seed/5),
+      angry:2+Math.floor(seed/7)
+    }
+  };
+}
+
+function saveReactions(seriesId, chapterNum, data){
+  try{
+    localStorage.setItem(`angelscan-react-${seriesId}-${chapterNum}`, JSON.stringify(data));
+  }catch{}
+}
+
+window.handleReaction=function(seriesId, chapterNum, type){
+  const data=getReactions(seriesId, chapterNum);
+  if(data.userReaction===type){
+    data.counts[type]=Math.max(0, (data.counts[type]||1)-1);
+    data.userReaction=null;
+  }else{
+    if(data.userReaction&&data.counts[data.userReaction]>0){
+      data.counts[data.userReaction]--;
+    }
+    data.counts[type]=(data.counts[type]||0)+1;
+    data.userReaction=type;
+  }
+  saveReactions(seriesId, chapterNum, data);
+  window.renderReactions(seriesId, chapterNum);
+};
+
+window.renderReactions=function(seriesId, chapterNum){
+  const container=$('#reactions-container');
+  if(!container)return;
+  const data=getReactions(seriesId, chapterNum);
+  const types=[
+    {key:'like',emoji:'👍',label:'Me gusta'},
+    {key:'love',emoji:'❤️',label:'Me encanta'},
+    {key:'laugh',emoji:'😆',label:'Divertido'},
+    {key:'wow',emoji:'😮',label:'Asombroso'},
+    {key:'sad',emoji:'😢',label:'Triste'},
+    {key:'angry',emoji:'😡',label:'Enojado'}
+  ];
+  container.innerHTML=types.map(t=>{
+    const isSelected=data.userReaction===t.key;
+    const countVal=data.counts[t.key]||0;
+    return `
+      <button type="button" class="reaction-btn ${isSelected?'active':''}" onclick="handleReaction('${esc(seriesId)}',${chapterNum},'${t.key}')" aria-label="${t.label} (${countVal})">
+        <span class="reaction-emoji">${t.emoji}</span>
+        <span class="reaction-count">${count(countVal)}</span>
+        <span class="reaction-label">${t.label}</span>
+      </button>
+    `;
+  }).join('');
+};
+
+window.copyReaderLink=function(){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(window.location.href).then(()=>{
+      toast('¡Enlace del capítulo copiado al portapapeles!');
+    }).catch(()=>{
+      toast('Enlace: '+window.location.href);
+    });
+  }else{
+    toast('Enlace: '+window.location.href);
+  }
+};
+
+function reader(id,number){
+  const m=series.find(m=>m.id===id),c=m?.chapters.find(c=>c.number===Number(number));
+  if(!c)return missing();
+  let progress=JSON.parse(localStorage.getItem('vortex-progress')||'{}');
+  progress[id]=c.number;
+  localStorage.setItem('vortex-progress',JSON.stringify(progress));
+  const chapters=[...m.chapters].sort((a,b)=>a.number-b.number),i=chapters.findIndex(x=>x.number===c.number);
+  const recs=series.filter(s=>s.id!==id).slice(0,5);
+
+  $('#app').innerHTML=`
+    <section class="reader">
+      <div class="reader-tools">
+        <a href="#series/${id}">← ${esc(m.title)}</a>
+        <select id="chapter-select" aria-label="Cambiar capítulo">
+          ${chapters.map(ch=>`<option value="${ch.number}" ${ch.number===c.number?'selected':''}>Capítulo ${ch.number}</option>`).join('')}
+        </select>
+        <select id="reader-width" aria-label="Ancho de lectura">
+          <option value="800">Ancho normal</option>
+          <option value="600">Compacto</option>
+          <option value="1100">Amplio</option>
+        </select>
+      </div>
+
+      ${m.demo?'<p class="demo-note">Páginas de demostración</p>':''}
+
+      <div class="reader-pages">
+        ${c.pages.map((p,idx)=>`<img src="${image(p)}" alt="Página ${idx+1} de ${esc(c.title)}" loading="${idx<2?'eager':'lazy'}" onerror="this.alt='No se pudo cargar la página ${idx+1}'">`).join('')}
+      </div>
+
+      <div class="reader-footer-flow">
+        <!-- 1. Fin de capítulo y navegación -->
+        <div class="chapter-end-card">
+          <p class="chapter-end-kicker">FIN DEL CAPÍTULO</p>
+          <h2 class="chapter-end-title">Capítulo ${c.number}: ${esc(c.title||'Continuará')}</h2>
+          <div class="chapter-end-nav">
+            ${i>0?`<a class="secondary end-nav-btn" href="#read/${id}/${chapters[i-1].number}">← Anterior</a>`:''}
+            <a class="secondary end-nav-btn" href="#series/${id}">Todos los capítulos</a>
+            ${i<chapters.length-1?`<a class="primary end-nav-btn next-cap-btn" href="#read/${id}/${chapters[i+1].number}">Siguiente capítulo →</a>`:'<span class="up-to-date-pill">🎉 ¡Estás al día con los capítulos!</span>'}
+          </div>
+        </div>
+
+        <!-- 2. Tarjetas de Compartir & Discord -->
+        <div class="reader-social-row">
+          <div class="reader-social-card">
+            <div class="social-card-text">
+              <strong>Comparte AngelScan</strong>
+              <p class="muted">Recomienda este capítulo a tus amigos</p>
+            </div>
+            <button type="button" class="social-card-btn share-btn" onclick="copyReaderLink()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+              <span>Compartir</span>
+            </button>
+          </div>
+          <div class="reader-social-card">
+            <div class="social-card-text">
+              <strong>Comunidad oficial</strong>
+              <p class="muted">Avisos de nuevos lanzamientos y charla</p>
+            </div>
+            <a href="https://discord.gg" target="_blank" rel="noopener noreferrer" class="social-card-btn discord-card-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+              <span>Discord</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 3. Barra de Reacciones -->
+        <div class="chapter-reactions-card" id="chapter-reactions-box">
+          <div class="reactions-header">
+            <p class="reactions-kicker">¿QUÉ TE PARECIÓ ESTE CAPÍTULO?</p>
+            <h3>Reacciones de los lectores</h3>
+          </div>
+          <div class="reactions-buttons-grid" id="reactions-container"></div>
+        </div>
+
+        <!-- 4. Recomendaciones ("También te podría gustar") -->
+        <section class="reader-recommendations">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">DESCUBRE MÁS HISTORIAS</p>
+              <h2>También te podría gustar</h2>
+            </div>
+            <a class="text-link" href="#catalog">Explorar todo el catálogo →</a>
+          </div>
+          <div class="reader-rec-grid">
+            ${recs.map(r=>`
+              <article class="series-card rec-card">
+                <a class="series-card-link" href="#series/${r.id}">
+                  <div class="cover-wrap">
+                    ${cover(r)}
+                    <span class="type-tag">${esc(r.type)}</span>
+                    <span class="rec-card-rating">★ ${esc(r.rating||'—')}</span>
+                  </div>
+                  <h3>${esc(r.title)}</h3>
+                  <p class="muted">${esc(r.genres?.[0]||r.type)} · ${r.chapters.length} caps</p>
+                </a>
+              </article>
+            `).join('')}
+          </div>
+        </section>
+
+        <!-- 5. Comentarios del capítulo -->
+        <div class="reader-comments-container">
+          ${window.seriesCommentsMarkup(id, `${m.title} — Capítulo ${c.number}`)}
+        </div>
+      </div>
+    </section>
+  `;
+
+  window.renderReactions(id, c.number);
+  window.mountSeriesComments(id);
+  $('#chapter-select').onchange=e=>location.hash=`read/${id}/${e.target.value}`;
+  $('#reader-width').onchange=e=>$('.reader-pages').style.maxWidth=e.target.value+'px';
+}
 function missing(){$('#app').innerHTML='<div class="empty"><h1>No encontramos esta página.</h1><a href="#home">Volver a la biblioteca →</a></div>';}
 function renderAdminLogin(){
   $('#app').innerHTML=`
