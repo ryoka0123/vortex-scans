@@ -432,6 +432,9 @@ window.setRankingFilter=function(key,val){
 function route(){const hash=location.hash.slice(1)||'home';const [path,search='']=hash.split('?');const [view,id,num]=path.split('/');const params=new URLSearchParams(search);if(view==='admin')admin();else if(view==='series')detail(id);else if(view==='read')reader(id,num);else if(view==='catalog')catalogPage(false,params);else if(view==='favorites')catalogPage(true,params);else if(view==='ranking'||view==='popular')rankingPage(params);else home();document.querySelectorAll('.site-header nav a').forEach(a=>{const target=a.getAttribute('href');const active=target==='#'+(view==='series'||view==='read'?'catalog':view==='popular'?'ranking':view);a.classList.toggle('current',active);if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});window.scrollTo(0,0);}
 
 function renderUserSlot(){
+  window.currentUser=currentUser;
+  window.authenticated=authenticated;
+  if(window.renderCommentUserBox) window.renderCommentUserBox();
   const slot=$('#user-auth-slot');
   if(!slot)return;
   if(!currentUser){
