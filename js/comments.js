@@ -2,15 +2,44 @@
   const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   const PRESET_GIFS = [
-    { title: 'Jinwoo Hype', tag: '🔥 Hype', url: 'https://media.tenor.com/7wA23x8e92YAAAAC/solo-leveling-jinwoo.gif' },
-    { title: 'Modo Cine Palomitas', tag: '🍿 Cine', url: 'https://media.tenor.com/qR-d0u1G8c4AAAAC/popcorn-eating.gif' },
-    { title: 'Anya Shock', tag: '😱 Shock', url: 'https://media.tenor.com/p_9K8w2yv8QAAAAC/anya-shock.gif' },
-    { title: 'Llorando de emoción', tag: '😭 Llorar', url: 'https://media.tenor.com/VpE2F094_nEAAAAC/crying-anime.gif' },
-    { title: 'Risa Anime', tag: '🤣 Risa', url: 'https://media.tenor.com/bI0yqK8s5qAAAAAC/anime-laugh.gif' },
-    { title: 'Sung Jin-woo Arise', tag: '👑 Épico', url: 'https://media.tenor.com/6U8h4oJvNPAAAAAC/sung-jin-woo-arise.gif' },
-    { title: 'Sukuna Batalla', tag: '⚔️ Pelea', url: 'https://media.tenor.com/kH_wP7Qv8d8AAAAC/sukuna-jujutsu-kaisen.gif' },
-    { title: 'Pulgar Arriba Like', tag: '👍 Genial', url: 'https://media.tenor.com/1GvK0pQ58X8AAAAC/thumbs-up-anime.gif' }
+    { title: 'Jinwoo Hype', tag: '🔥 Hype', url: '/assets/gifs/hype.gif' },
+    { title: 'Modo Cine Palomitas', tag: '🍿 Cine', url: '/assets/gifs/popcorn.gif' },
+    { title: 'Anya Shock', tag: '😱 Shock', url: '/assets/gifs/shock.gif' },
+    { title: 'Llorando de emoción', tag: '😭 Llorar', url: '/assets/gifs/crying.gif' },
+    { title: 'Risa Anime', tag: '🤣 Risa', url: '/assets/gifs/laugh.gif' },
+    { title: 'Fuego y Poder', tag: '⚡ Fuego', url: '/assets/gifs/fire.gif' },
+    { title: 'Pulgar Arriba Like', tag: '👍 Genial', url: '/assets/gifs/like.gif' }
   ];
+
+  const EMOJI_OPTIONS = ['👍', '❤️', '🔥', '😂', '💀', '🤯', '👏', '😭'];
+
+  function timeAgo(dateString){
+    const d = new Date(dateString);
+    if(Number.isNaN(d.getTime())) return '';
+    const now = new Date();
+    const sec = Math.floor((now - d) / 1000);
+    if(sec < 45) return 'Hace un momento';
+    if(sec < 3600) return `Hace ${Math.floor(sec / 60)} min`;
+    if(sec < 86400) return `Hace ${Math.floor(sec / 3600)} h`;
+    if(sec < 86400 * 7) return `Hace ${Math.floor(sec / 86400)} d`;
+    return new Intl.DateTimeFormat('es', { dateStyle: 'medium', timeStyle: 'short' }).format(d);
+  }
+
+  // Local storage reaction store helper
+  function getStoredUserReactions(commentId){
+    try{
+      const all = JSON.parse(localStorage.getItem('angelscan_comment_reacts') || '{}');
+      return Array.isArray(all[commentId]) ? all[commentId] : [];
+    }catch{ return []; }
+  }
+  function setStoredUserReactions(commentId, list){
+    try{
+      const all = JSON.parse(localStorage.getItem('angelscan_comment_reacts') || '{}');
+      if(list && list.length) all[commentId] = list;
+      else delete all[commentId];
+      localStorage.setItem('angelscan_comment_reacts', JSON.stringify(all));
+    }catch{}
+  }
 
   // Global Lightbox for comment images and GIFs
   window.openCommentMediaModal = function(url){
@@ -65,10 +94,11 @@
       <div class="section-title">
         <div>
           <p class="eyebrow">LA CONVERSACIÓN DE ESTA HISTORIA</p>
-          <h2 id="comments-heading">Comentarios <small id="comments-count"></small></h2>
+          <h2 id="comments-heading">Comentarios <span class="comments-count-pill" id="comments-count"></span></h2>
         </div>
       </div>
-      <p class="muted comments-intro">Comenta sobre ${escape(title)}. Evita spoilers y respeta a los demás lectores. Puedes adjuntar GIFs o imágenes.</p>
+      <p class="muted comments-intro">Comenta sobre ${escape(title)}. Evita spoilers y respeta a los demás lectores. Puedes reaccionar y adjuntar GIFs o imágenes.</p>
+      
       <form id="comment-form" class="comment-form">
         <div id="comment-user-box" class="comment-user-box"></div>
         <label for="comment-text">Tu comentario
@@ -103,12 +133,12 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
               <span>Enlace</span>
             </button>
-            <button type="button" class="comment-action-pill highlight" id="comment-gif-btn" title="Elegir GIFs de reacción populares">
+            <button type="button" class="comment-action-pill highlight" id="comment-gif-btn" title="Elegir GIFs de reacción rápida">
               <span class="gif-tag-mini">GIF</span>
               <span>Reacciones GIF</span>
             </button>
           </div>
-          <div class="comment-toolbar-tip">También puedes pegar imágenes con Ctrl+V</div>
+          <div class="comment-toolbar-tip">Puedes pegar capturas o imágenes con Ctrl+V</div>
         </div>
 
         <!-- URL Input drawer -->
@@ -133,13 +163,14 @@
         </div>
 
         <div class="comment-form-footer">
-          <p id="comment-feedback" role="status" aria-live="polite"></p>
-          <span id="comment-counter" class="muted">0 / 2000</span>
+          <div id="comment-feedback" class="comment-feedback-slot" role="status" aria-live="polite"></div>
+          <span id="comment-counter" class="comment-char-counter">0 / 2000</span>
           <button type="submit" class="primary" id="post-comment">Publicar comentario →</button>
         </div>
       </form>
+
       <div id="comments-list" class="comments-list" aria-live="polite">
-        <p class="muted">Cargando comentarios…</p>
+        <p class="muted comments-loading">Cargando comentarios…</p>
       </div>
       <button type="button" class="secondary comments-more" id="comments-more" hidden>Ver más comentarios</button>
     </section>
@@ -155,6 +186,7 @@
     const form = find('#comment-form');
     let items = [], next = null, loading = false;
     let attachedMedia = null;
+    let feedbackTimer = null;
 
     function renderCommentUserBox(){
       const box = find('#comment-user-box');
@@ -168,9 +200,9 @@
             <div class="comment-author-info">
               <div class="comment-author-name">
                 <strong>${escape(user.username)}</strong>
-                ${isAdmin ? '<span class="comment-team">Equipo AngelScan</span>' : ''}
+                ${isAdmin ? '<span class="comment-team">Equipo AngelScan</span>' : '<span class="comment-badge verified">✓ Verificado</span>'}
               </div>
-              <span class="comment-author-meta">Comentando con tu cuenta verificada</span>
+              <span class="comment-author-meta">Comentando con tu cuenta activa</span>
             </div>
             <input id="comment-name" name="name" type="hidden" value="${escape(user.username)}">
           </div>
@@ -192,11 +224,23 @@
     window.renderCommentUserBox = renderCommentUserBox;
     renderCommentUserBox();
 
-    // Feedback helper
-    const showFeedback = msg => {
+    // Auto-dismissing feedback notifications
+    function showFeedback(msg, type = 'info'){
       const fb = find('#comment-feedback');
-      if(fb) fb.textContent = msg;
-    };
+      if(!fb) return;
+      clearTimeout(feedbackTimer);
+      if(!msg){
+        fb.innerHTML = '';
+        return;
+      }
+      const icon = type === 'success' ? '✓' : (type === 'error' ? '⚠️' : 'ℹ️');
+      fb.innerHTML = `<span class="feedback-badge ${type}">${icon} ${escape(msg)}</span>`;
+      if(type === 'success'){
+        feedbackTimer = setTimeout(() => {
+          if(fb) fb.innerHTML = '';
+        }, 4500);
+      }
+    }
 
     // Media preview controls
     const previewContainer = find('#comment-media-preview');
@@ -239,11 +283,11 @@
         const file = e.target.files && e.target.files[0];
         if(!file) return;
         if(!file.type.match(/^image\/(png|jpeg|jpg|webp|gif)$/i)){
-          showFeedback('Formato no compatible. Sube una imagen en formato PNG, JPG, WEBP o GIF.');
+          showFeedback('Formato no compatible. Sube una imagen en formato PNG, JPG, WEBP o GIF.', 'error');
           return;
         }
         if(file.size > 8 * 1024 * 1024){
-          showFeedback('La imagen o GIF es demasiado grande. El límite máximo es de 8 MB.');
+          showFeedback('La imagen o GIF supera el límite de 8 MB.', 'error');
           return;
         }
         const reader = new FileReader();
@@ -252,7 +296,7 @@
           urlDrawer.hidden = true;
           gifDrawer.hidden = true;
         };
-        reader.onerror = () => showFeedback('Error al leer el archivo seleccionado.');
+        reader.onerror = () => showFeedback('Error al leer el archivo seleccionado.', 'error');
         reader.readAsDataURL(file);
       };
     }
@@ -273,7 +317,7 @@
       const handleUrlSubmit = () => {
         const val = urlField.value.trim();
         if(!/^https?:\/\//i.test(val)){
-          showFeedback('Ingresa un enlace web válido que empiece con https://');
+          showFeedback('Ingresa un enlace web válido que empiece con https://', 'error');
           return;
         }
         setMedia(val, /\.gif(\?|$)/i.test(val) ? 'GIF por enlace' : 'Imagen por enlace');
@@ -323,7 +367,7 @@
             const blob = item.getAsFile();
             if(blob){
               if(blob.size > 8 * 1024 * 1024){
-                showFeedback('La imagen pegada supera el límite de 8 MB.');
+                showFeedback('La imagen pegada supera el límite de 8 MB.', 'error');
                 return;
               }
               const reader = new FileReader();
@@ -340,10 +384,6 @@
     }
 
     const endpoint = `series/${encodeURIComponent(id)}/comments`;
-    const date = value => {
-      const d = new Date(value);
-      return Number.isNaN(d.getTime()) ? '' : new Intl.DateTimeFormat('es', { dateStyle: 'medium', timeStyle: 'short' }).format(d);
-    };
 
     async function request(path, method = 'GET', body){
       const response = await fetch('/api/' + path, {
@@ -356,42 +396,160 @@
       return data;
     }
 
+    // Reaction handler for individual comments
+    async function handleCommentReaction(commentId, emoji){
+      const userList = getStoredUserReactions(commentId);
+      const alreadyReacted = userList.includes(emoji);
+      const action = alreadyReacted ? 'remove' : 'add';
+
+      // Optimistic client update
+      const comment = items.find(c => c.id === commentId);
+      if(!comment) return;
+      if(!comment.reactions || typeof comment.reactions !== 'object') comment.reactions = {};
+      const current = Number(comment.reactions[emoji]) || 0;
+      const nextVal = Math.max(0, current + (alreadyReacted ? -1 : 1));
+      if(nextVal === 0) delete comment.reactions[emoji];
+      else comment.reactions[emoji] = nextVal;
+
+      const nextUserList = alreadyReacted ? userList.filter(e => e !== emoji) : [...userList, emoji];
+      setStoredUserReactions(commentId, nextUserList);
+      render();
+
+      try{
+        const res = await request(`series/${encodeURIComponent(id)}/comments/${encodeURIComponent(commentId)}/react`, 'POST', { emoji, action });
+        if(res && res.reactions){
+          comment.reactions = res.reactions;
+          render();
+        }
+      }catch(err){
+        console.error('Error reacting to comment:', err);
+        setStoredUserReactions(commentId, userList);
+        load(false);
+      }
+    }
+
+    // Close reaction popups when clicking outside
+    document.addEventListener('click', e => {
+      if(!e.target.closest('.comment-react-popover-wrap')){
+        section.querySelectorAll('.comment-emoji-popup').forEach(p => p.hidden = true);
+      }
+    });
+
     function render(){
       if(!section.isConnected) return;
       const list = find('#comments-list');
       if(!items.length){
-        list.innerHTML = '<div class="comments-empty"><h3>La conversación empieza contigo.</h3><p class="muted">Todavía no hay comentarios en esta serie.</p></div>';
+        list.innerHTML = `
+          <div class="comments-empty">
+            <div class="comments-empty-icon">💬</div>
+            <h3>Sé el primero en iniciar la conversación</h3>
+            <p class="muted">Comparte tus teorías, reacciones o adjunta un GIF de este capítulo.</p>
+          </div>
+        `;
         find('#comments-more').hidden = true;
         return;
       }
 
-      list.innerHTML = items.map(c => `
-        <article class="comment-entry" data-comment="${escape(c.id)}">
-          <div class="comment-avatar" aria-hidden="true">${escape([...c.name][0]?.toUpperCase() || 'L')}</div>
-          <div class="comment-content">
-            <header>
-              <strong>${escape(c.name)}</strong>
-              ${c.team ? '<span class="comment-team">Equipo AngelScan</span>' : ''}
-              <time datetime="${escape(c.createdAt)}">${escape(date(c.createdAt))}</time>
-              ${typeof authenticated !== 'undefined' && authenticated ? `
-                <button type="button" class="quiet comment-remove" data-remove-comment="${escape(c.id)}" aria-label="Eliminar comentario de ${escape(c.name)}">Eliminar</button>
-              ` : ''}
-            </header>
-            ${c.text ? `<p class="comment-text">${escape(c.text)}</p>` : ''}
-            ${c.image ? `
-              <div class="comment-media-display">
-                <div class="comment-media-frame" data-media="${escape(c.image)}" role="button" tabindex="0" title="Clic para ampliar GIF o imagen">
-                  <img src="${escape(c.image)}" alt="Adjunto de ${escape(c.name)}" class="comment-attached-media" loading="lazy" />
-                  <span class="media-zoom-pill">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
-                    Ampliar
-                  </span>
+      list.innerHTML = items.map(c => {
+        const userReactions = getStoredUserReactions(c.id);
+        const reactionsObj = c.reactions || {};
+        const activeReactionEntries = Object.entries(reactionsObj).filter(([_, count]) => count > 0);
+
+        return `
+          <article class="comment-entry" data-comment="${escape(c.id)}">
+            <div class="comment-avatar" aria-hidden="true">${escape([...c.name][0]?.toUpperCase() || 'L')}</div>
+            <div class="comment-body">
+              <header class="comment-header">
+                <div class="comment-author-wrap">
+                  <strong class="comment-author-name">${escape(c.name)}</strong>
+                  ${c.team ? '<span class="comment-badge team">Equipo AngelScan</span>' : (c.registered ? '<span class="comment-badge verified" title="Lector verificado">✓ Verificado</span>' : '<span class="comment-badge guest">Lector</span>')}
+                  <span class="comment-dot">·</span>
+                  <time class="comment-time" datetime="${escape(c.createdAt)}" title="${escape(new Date(c.createdAt).toLocaleString())}">${escape(timeAgo(c.createdAt))}</time>
                 </div>
-              </div>
-            ` : ''}
-          </div>
-        </article>
-      `).join('');
+                ${typeof authenticated !== 'undefined' && authenticated ? `
+                  <button type="button" class="comment-remove" data-remove-comment="${escape(c.id)}" aria-label="Eliminar comentario de ${escape(c.name)}">Eliminar</button>
+                ` : ''}
+              </header>
+
+              ${c.text ? `<p class="comment-text">${escape(c.text)}</p>` : ''}
+
+              ${c.image ? `
+                <div class="comment-media-display">
+                  <div class="comment-media-frame" data-media="${escape(c.image)}" role="button" tabindex="0" title="Clic para ampliar GIF o imagen">
+                    <img src="${escape(c.image)}" alt="Adjunto de ${escape(c.name)}" class="comment-attached-media" loading="lazy" onerror="this.onerror=null; this.closest('.comment-media-display').innerHTML='<span class=\\'media-broken-tag\\'>⚠️ Imagen o GIF no disponible</span>';" />
+                    <span class="media-zoom-pill">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                      Ampliar
+                    </span>
+                  </div>
+                </div>
+              ` : ''}
+
+              <!-- Reactions Bar -->
+              <footer class="comment-reactions-bar">
+                <div class="comment-reaction-chips">
+                  ${activeReactionEntries.map(([emoji, count]) => {
+                    const hasUserReacted = userReactions.includes(emoji);
+                    return `
+                      <button type="button" class="comment-reaction-chip ${hasUserReacted ? 'user-reacted' : ''}" data-comment-id="${escape(c.id)}" data-emoji="${escape(emoji)}" title="${hasUserReacted ? 'Quitar tu reacción' : 'Reaccionar con ' + escape(emoji)}">
+                        <span class="cr-emoji">${escape(emoji)}</span>
+                        <span class="cr-count">${count}</span>
+                      </button>
+                    `;
+                  }).join('')}
+                </div>
+
+                <div class="comment-react-popover-wrap">
+                  <button type="button" class="comment-react-add-btn" data-toggle-picker="${escape(c.id)}" title="Reaccionar a este comentario">
+                    <span class="react-smiley-icon">😊</span>
+                    <span>Reaccionar</span>
+                  </button>
+                  <div class="comment-emoji-popup" id="emoji-popup-${escape(c.id)}" hidden>
+                    ${EMOJI_OPTIONS.map(emoji => `
+                      <button type="button" class="emoji-quick-btn ${userReactions.includes(emoji) ? 'active' : ''}" data-comment-id="${escape(c.id)}" data-emoji="${emoji}" title="${emoji}">
+                        ${emoji}
+                      </button>
+                    `).join('')}
+                  </div>
+                </div>
+              </footer>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      // Bind reaction chips
+      list.querySelectorAll('.comment-reaction-chip').forEach(btn => {
+        btn.onclick = () => {
+          handleCommentReaction(btn.dataset.commentId, btn.dataset.emoji);
+        };
+      });
+
+      // Bind "+ Reaccionar" popover toggle
+      list.querySelectorAll('[data-toggle-picker]').forEach(btn => {
+        btn.onclick = e => {
+          e.stopPropagation();
+          const cid = btn.dataset.togglePicker;
+          const popup = list.querySelector('#emoji-popup-' + cid);
+          if(!popup) return;
+          const isHidden = popup.hidden;
+          // Close all open emoji popups first
+          list.querySelectorAll('.comment-emoji-popup').forEach(p => p.hidden = true);
+          popup.hidden = !isHidden;
+        };
+      });
+
+      // Bind emoji buttons inside popover
+      list.querySelectorAll('.emoji-quick-btn').forEach(btn => {
+        btn.onclick = e => {
+          e.stopPropagation();
+          const cid = btn.dataset.commentId;
+          const emoji = btn.dataset.emoji;
+          const popup = list.querySelector('#emoji-popup-' + cid);
+          if(popup) popup.hidden = true;
+          handleCommentReaction(cid, emoji);
+        };
+      });
 
       // Click to enlarge comment media
       list.querySelectorAll('.comment-media-frame').forEach(frame => {
@@ -411,7 +569,7 @@
             await request(endpoint + '?commentId=' + encodeURIComponent(button.dataset.removeComment), 'DELETE');
             await load(false);
           }catch(e){
-            showFeedback(e.message);
+            showFeedback(e.message, 'error');
             button.disabled = false;
           }
         };
@@ -429,12 +587,13 @@
         if(!section.isConnected) return false;
         items = more ? [...new Map([...items, ...data.items].map(c => [c.id, c])).values()] : data.items;
         next = data.next;
-        find('#comments-count').textContent = '(' + data.total + ')';
+        const countPill = find('#comments-count');
+        if(countPill) countPill.textContent = '(' + data.total + ')';
         render();
         return true;
       }catch(e){
         if(!section.isConnected) return false;
-        showFeedback(e.message);
+        showFeedback(e.message, 'error');
         if(!more){
           find('#comments-list').innerHTML = '<button type="button" class="secondary" id="comments-retry">Reintentar carga de comentarios</button>';
           find('#comments-retry').onclick = () => load(false);
@@ -461,16 +620,16 @@
       const text = textarea ? textarea.value.trim() : '';
 
       if(!window.currentUser && name.length < 2){
-        showFeedback('Escribe tu nombre de lector antes de publicar.');
+        showFeedback('Escribe tu nombre de lector antes de publicar.', 'error');
         return;
       }
       if(!text && !attachedMedia){
-        showFeedback('Escribe un comentario o adjunta un GIF / imagen.');
+        showFeedback('Escribe un comentario o adjunta un GIF o imagen.', 'error');
         return;
       }
 
       find('#post-comment').disabled = true;
-      showFeedback('Publicando comentario…');
+      showFeedback('Publicando comentario…', 'info');
       try{
         await request(endpoint, 'POST', { name, text, image: attachedMedia || '' });
         if(!section.isConnected) return;
@@ -483,9 +642,9 @@
         if(urlDrawer) urlDrawer.hidden = true;
         if(gifDrawer) gifDrawer.hidden = true;
         const refreshed = await load(false);
-        if(section.isConnected && refreshed) showFeedback('¡Tu comentario fue publicado con éxito!');
+        if(section.isConnected && refreshed) showFeedback('¡Tu comentario fue publicado con éxito!', 'success');
       }catch(e){
-        if(section.isConnected) showFeedback(e.message);
+        if(section.isConnected) showFeedback(e.message, 'error');
       }finally{
         if(section.isConnected) find('#post-comment').disabled = false;
       }
