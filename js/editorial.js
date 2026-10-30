@@ -69,7 +69,9 @@ window.renderReactions=function(seriesId, chapterNum){
     const countVal=data.counts[t.key]||0;
     return `
       <button type="button" class="reaction-btn ${isSelected?'active':''}" onclick="handleReaction('${esc(seriesId)}',${chapterNum},'${t.key}')" aria-label="${t.label} (${countVal})">
-        <span class="reaction-emoji">${t.emoji}</span>
+        <span class="reaction-emoji-circle emoji-${t.key}">
+          <span class="reaction-emoji">${t.emoji}</span>
+        </span>
         <span class="reaction-count">${count(countVal)}</span>
         <span class="reaction-label">${t.label}</span>
       </button>
@@ -154,16 +156,7 @@ function reader(id,number){
           </div>
         </div>
 
-        <!-- 3. Barra de Reacciones -->
-        <div class="chapter-reactions-card" id="chapter-reactions-box">
-          <div class="reactions-header">
-            <p class="reactions-kicker">¿QUÉ TE PARECIÓ ESTE CAPÍTULO?</p>
-            <h3>Reacciones de los lectores</h3>
-          </div>
-          <div class="reactions-buttons-grid" id="reactions-container"></div>
-        </div>
-
-        <!-- 4. Recomendaciones ("También te podría gustar") -->
+        <!-- 3. Recomendaciones ("También te podría gustar") -->
         <section class="reader-recommendations">
           <div class="section-title">
             <div>
@@ -189,8 +182,12 @@ function reader(id,number){
           </div>
         </section>
 
-        <!-- 5. Comentarios del capítulo -->
+        <!-- 4. Caja unificada: Reacciones integradas justo con los Comentarios -->
         <div class="reader-comments-container">
+          <div class="reader-reactions-block" id="chapter-reactions-box">
+            <div class="reactions-buttons-row" id="reactions-container"></div>
+          </div>
+          <div class="reactions-comments-divider"></div>
           ${window.seriesCommentsMarkup(id, `${m.title} — Capítulo ${c.number}`)}
         </div>
       </div>
