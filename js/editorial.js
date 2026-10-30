@@ -128,7 +128,7 @@ function reader(id,number){
           <div class="chapter-end-nav">
             ${i>0?`<a class="secondary end-nav-btn" href="#read/${id}/${chapters[i-1].number}">← Anterior</a>`:''}
             <a class="secondary end-nav-btn" href="#series/${id}">Todos los capítulos</a>
-            ${i<chapters.length-1?`<a class="primary end-nav-btn next-cap-btn" href="#read/${id}/${chapters[i+1].number}">Siguiente capítulo →</a>`:'<span class="up-to-date-pill">🎉 ¡Estás al día con los capítulos!</span>'}
+            ${i<chapters.length-1?`<a class="primary end-nav-btn next-cap-btn" href="#read/${id}/${chapters[i+1].number}">Siguiente capítulo →</a>`:''}
           </div>
         </div>
 
