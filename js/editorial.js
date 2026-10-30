@@ -302,27 +302,48 @@ window.closeAuthModal=function(){
 window.switchAuthTab=function(tab){
   const title=$('#auth-modal-title');
   const desc=$('#auth-modal-desc');
+  const tabsWrap=$('.olympus-tabs');
   const tabLogin=$('#tab-login');
   const tabReg=$('#tab-register');
   const formLogin=$('#form-login');
   const formReg=$('#form-register');
+  const formForgot=$('#form-forgot');
   const err=$('#auth-modal-error');
+  const success=$('#auth-modal-success');
   if(err)err.style.display='none';
+  if(success)success.style.display='none';
 
-  if(tab==='register'){
+  if(tab==='forgot'){
+    if(title)title.textContent='Recuperar contraseña';
+    if(desc)desc.textContent='Ingresa tu correo y elige tu nueva contraseña.';
+    if(tabsWrap)tabsWrap.style.display='none';
+    if(formLogin)formLogin.style.display='none';
+    if(formReg)formReg.style.display='none';
+    if(formForgot){
+      formForgot.style.display='block';
+      formForgot.reset();
+      if(formLogin&&formLogin.elements.email&&formLogin.elements.email.value){
+        formForgot.elements.email.value=formLogin.elements.email.value;
+      }
+    }
+  }else if(tab==='register'){
     if(title)title.textContent='Crea tu cuenta';
     if(desc)desc.textContent='Regístrate para guardar tu progreso y favoritos.';
+    if(tabsWrap)tabsWrap.style.display='grid';
     tabLogin?.classList.remove('active');
     tabReg?.classList.add('active');
     if(formLogin)formLogin.style.display='none';
     if(formReg)formReg.style.display='block';
+    if(formForgot)formForgot.style.display='none';
   }else{
     if(title)title.textContent='Bienvenido de nuevo';
     if(desc)desc.textContent='Entra con tu correo para seguir donde lo dejaste.';
+    if(tabsWrap)tabsWrap.style.display='grid';
     tabLogin?.classList.add('active');
     tabReg?.classList.remove('active');
     if(formLogin)formLogin.style.display='block';
     if(formReg)formReg.style.display='none';
+    if(formForgot)formForgot.style.display='none';
   }
 };
 
@@ -390,6 +411,42 @@ function bindAuthForms(){
         }
       }finally{
         if(btn){btn.disabled=false;btn.textContent='Crear mi cuenta';}
+      }
+    };
+  }
+
+  const formForgot=$('#form-forgot');
+  if(formForgot){
+    formForgot.onsubmit=async e=>{
+      e.preventDefault();
+      const err=$('#auth-modal-error'), success=$('#auth-modal-success'), btn=$('#btn-forgot');
+      if(err)err.style.display='none';
+      if(success)success.style.display='none';
+      if(btn){btn.disabled=true;btn.textContent='Actualizando contraseña...';}
+      try{
+        const email=formForgot.elements.email.value;
+        const newPassword=formForgot.elements.newPassword.value;
+        const res=await api('reset-password','POST',{email,newPassword});
+        if(success){
+          success.textContent='✓ '+(res.message||'Contraseña actualizada con éxito.');
+          success.style.display='block';
+        }
+        setTimeout(()=>{
+          switchAuthTab('login');
+          const loginForm=$('#form-login');
+          if(loginForm&&loginForm.elements.email){
+            loginForm.elements.email.value=email;
+            loginForm.elements.password.focus();
+          }
+          toast('¡Contraseña restablecida! Ya puedes entrar.');
+        },1500);
+      }catch(errRes){
+        if(err){
+          err.textContent=errRes.message||'No se pudo restablecer la contraseña.';
+          err.style.display='block';
+        }
+      }finally{
+        if(btn){btn.disabled=false;btn.textContent='Restablecer contraseña';}
       }
     };
   }

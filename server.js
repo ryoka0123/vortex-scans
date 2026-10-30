@@ -79,6 +79,18 @@ const server=http.createServer(async(req,res)=>{
     res.setHeader('Set-Cookie',`vortex_session=${t}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800${process.env.COOKIE_SECURE==='true'?'; Secure':''}`);
     return send(200,{ok:true,user:userSafe,authenticated:isAdmin});
   }
+  if(url.pathname==='/api/reset-password'&&req.method==='POST'){
+    const email=typeof body.email==='string'?body.email.trim().toLowerCase():'';
+    const newPass=String(body.newPassword||'');
+    if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return send(400,{error:'Ingresa un correo electrónico válido.'});
+    if(newPass.length<6)return send(400,{error:'La nueva contraseña debe tener al menos 6 caracteres.'});
+    const userIndex=users.findIndex(u=>u.email===email||u.username.toLowerCase()===email);
+    if(userIndex<0)return send(404,{error:'No encontramos ninguna cuenta con ese correo electrónico.'});
+    users[userIndex].passwordHash=crypto.createHash('sha256').update(newPass).digest('hex');
+    users[userIndex].updatedAt=new Date().toISOString();
+    persistUsers();
+    return send(200,{ok:true,message:'Tu contraseña ha sido restablecida con éxito. Ya puedes iniciar sesión.'});
+  }
   if(url.pathname==='/api/logout'&&req.method==='POST'){sessions.delete(token);res.setHeader('Set-Cookie','vortex_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0');return send(200,{ok:true});}
   if(url.pathname==='/api/catalog'&&req.method==='GET')return send(200,catalog);
   const commentMatch=url.pathname.match(/^\/api\/series\/([a-z0-9-]+)\/comments$/);
