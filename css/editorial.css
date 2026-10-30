@@ -1262,6 +1262,19 @@
   border-top: none;
 }
 
+.series-comments:not(.in-reader) .reader-reactions-block {
+  background: #14171a;
+  border: 1px solid #252b30;
+  border-radius: 14px;
+  padding: 24px 20px;
+  margin-bottom: 28px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.series-comments:not(.in-reader) .reactions-comments-divider {
+  display: none;
+}
+
 /* Responsive adjustments */
 @media (max-width: 860px) {
   .reader-rec-grid {

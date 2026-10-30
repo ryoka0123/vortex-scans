@@ -31,66 +31,72 @@ async function api(url,method='GET',body){const r=await fetch('/api/'+url,{metho
 function toast(s){$('#toast').textContent=s;$('#toast').classList.add('visible');setTimeout(()=>$('#toast').classList.remove('visible'),3500);}
 function bind(selector,event,fn){document.querySelectorAll(selector).forEach(el=>el.addEventListener(event,fn));}
 function cards(list){return list.map(m=>`<article class="series-card"><a class="series-card-link" href="#series/${m.id}"><div class="cover-wrap">${cover(m)}<span class="type-tag">${esc(m.type)}</span><span class="cover-arrow">↗</span></div><p class="card-meta">${esc(m.genres?.[0]||m.type)} <span>★ ${esc(m.rating||'—')}</span></p><h3>${esc(m.title)}</h3><p class="muted">${m.chapters.length?`Capítulo ${m.latestChapter}`:'Próximamente'} <span class="status-dot"></span></p></a><div class="card-chapters">${[...m.chapters].sort((a,b)=>b.number-a.number).slice(0,2).map(c=>`<a href="#read/${m.id}/${c.number}"><span>Capítulo ${c.number}</span><span>Leer ↗</span></a>`).join('')}</div></article>`).join('')||'<div class="empty"><h3>Aún no hay historias aquí.</h3><p>Prueba otra búsqueda o explora todos los títulos.</p></div>';}
-function detail(id){const m=series.find(m=>m.id===id);if(!m)return missing();current=m;api(`series/${id}/view`,'POST',{}).then(v=>m.views=v.views).catch(()=>{});const history=JSON.parse(localStorage.getItem('vortex-progress')||'{}')[id];$('#app').innerHTML=`<a class="back" href="#home">← Volver a explorar</a><section class="detail"><div>${cover(m,'detail-cover')}</div><div><p class="eyebrow"><a class="type-link" href="#catalog?type=${encodeURIComponent(m.type)}">${esc(m.type)}</a> / ${esc(m.status)}</p><h1>${esc(m.title)}</h1><p class="muted">${esc(m.altTitles||'')}</p><div class="tags">${genreTags(m.genres)}</div><p class="synopsis">${esc(m.synopsis)}</p><p class="muted">${esc(m.author||'Autor por confirmar')} · ★ ${esc(m.rating||'—')} · ${count(m.views)} visitas</p>${m.demo?'<p class="demo-note">Ficha de demostración. Las páginas de muestra no son capítulos reales.</p>':''}<div class="actions">${m.chapters.length?`<a class="primary" href="#read/${id}/${history??Math.min(...m.chapters.map(c=>c.number))}">${history!=null?'Continuar lectura':'Empezar a leer'} →</a>`:''}<button id="bookmark" class="secondary">${(currentUser&&favorites().includes(id))?'✓ En tu biblioteca':'+ Guardar en biblioteca'}</button></div></div></section><section class="chapters"><div class="section-title"><h2>Capítulos <small>${m.chapters.length}</small></h2><input id="chapter-search" type="search" placeholder="Buscar capítulo" aria-label="Buscar capítulo"></div><div id="chapter-list"></div></section>${window.seriesCommentsMarkup(id,m.title)}`;const list=q=>$('#chapter-list').innerHTML=[...m.chapters].sort((a,b)=>b.number-a.number).filter(c=>`${c.number} ${c.title}`.toLowerCase().includes(q.toLowerCase())).map(c=>`<a class="chapter-row" href="#read/${id}/${c.number}"><span><b>Capítulo ${c.number}</b> ${esc(c.title)}</span><span>Leer →</span></a>`).join('')||'<p class="empty">No hay capítulos disponibles.</p>';list('');window.mountSeriesComments(id);$('#chapter-search').oninput=e=>list(e.target.value);$('#bookmark').onclick=()=>{if(!currentUser){openAuthModal('login');toast('Inicia sesión o regístrate para guardar historias en tu biblioteca');return;}let f=favorites();f=f.includes(id)?f.filter(x=>x!==id):[...f,id];saveFavorites(f);$('#bookmark').textContent=f.includes(id)?'✓ En tu biblioteca':'+ Guardar en biblioteca';toast(f.includes(id)?'Serie guardada en tu biblioteca':'Serie eliminada de tu biblioteca');};}
-function getReactions(seriesId, chapterNum){
-  const key=`angelscan-react-${seriesId}-${chapterNum}`;
+function detail(id){const m=series.find(m=>m.id===id);if(!m)return missing();current=m;api(`series/${id}/view`,'POST',{}).then(v=>m.views=v.views).catch(()=>{});const history=JSON.parse(localStorage.getItem('vortex-progress')||'{}')[id];$('#app').innerHTML=`<a class="back" href="#home">← Volver a explorar</a><section class="detail"><div>${cover(m,'detail-cover')}</div><div><p class="eyebrow"><a class="type-link" href="#catalog?type=${encodeURIComponent(m.type)}">${esc(m.type)}</a> / ${esc(m.status)}</p><h1>${esc(m.title)}</h1><p class="muted">${esc(m.altTitles||'')}</p><div class="tags">${genreTags(m.genres)}</div><p class="synopsis">${esc(m.synopsis)}</p><p class="muted">${esc(m.author||'Autor por confirmar')} · ★ ${esc(m.rating||'—')} · ${count(m.views)} visitas</p>${m.demo?'<p class="demo-note">Ficha de demostración. Las páginas de muestra no son capítulos reales.</p>':''}<div class="actions">${m.chapters.length?`<a class="primary" href="#read/${id}/${history??Math.min(...m.chapters.map(c=>c.number))}">${history!=null?'Continuar lectura':'Empezar a leer'} →</a>`:''}<button id="bookmark" class="secondary">${(currentUser&&favorites().includes(id))?'✓ En tu biblioteca':'+ Guardar en biblioteca'}</button></div></div></section><section class="chapters"><div class="section-title"><h2>Capítulos <small>${m.chapters.length}</small></h2><input id="chapter-search" type="search" placeholder="Buscar capítulo" aria-label="Buscar capítulo"></div><div id="chapter-list"></div></section>${window.seriesCommentsMarkup(id,m.title,false)}`;const list=q=>$('#chapter-list').innerHTML=[...m.chapters].sort((a,b)=>b.number-a.number).filter(c=>`${c.number} ${c.title}`.toLowerCase().includes(q.toLowerCase())).map(c=>`<a class="chapter-row" href="#read/${id}/${c.number}"><span><b>Capítulo ${c.number}</b> ${esc(c.title)}</span><span>Leer →</span></a>`).join('')||'<p class="empty">No hay capítulos disponibles.</p>';list('');window.mountSeriesComments(id,'series');$('#chapter-search').oninput=e=>list(e.target.value);$('#bookmark').onclick=()=>{if(!currentUser){openAuthModal('login');toast('Inicia sesión o regístrate para guardar historias en tu biblioteca');return;}let f=favorites();f=f.includes(id)?f.filter(x=>x!==id):[...f,id];saveFavorites(f);$('#bookmark').textContent=f.includes(id)?'✓ En tu biblioteca':'+ Guardar en biblioteca';toast(f.includes(id)?'Serie guardada en tu biblioteca':'Serie eliminada de tu biblioteca');};}
+function getReactions(seriesId, chapterNum = 'series'){
+  const cKey = chapterNum || 'series';
+  const key = `angelscan-react-${seriesId}-${cKey}`;
   try{
-    const saved=JSON.parse(localStorage.getItem(key)||'null');
-    if(saved) return saved;
+    const saved = JSON.parse(localStorage.getItem(key) || 'null');
+    if (saved) return saved;
   }catch{}
-  const seed=(seriesId.charCodeAt(0)+Number(chapterNum)*7)%50;
+  const chSeed = typeof chapterNum === 'number' ? chapterNum * 7 : (cKey === 'series' ? 42 : Number(cKey) * 7 || 42);
+  const seed = (seriesId.charCodeAt(0) + chSeed) % 50;
   return {
-    userReaction:null,
-    counts:{
-      like:16+seed,
-      love:92+seed*2,
-      laugh:7+Math.floor(seed/3),
-      wow:28+seed,
-      sad:3+Math.floor(seed/5),
-      angry:2+Math.floor(seed/7)
+    userReaction: null,
+    counts: {
+      like: 28 + seed,
+      love: 114 + seed * 2,
+      laugh: 12 + Math.floor(seed / 3),
+      wow: 32 + seed,
+      sad: 4 + Math.floor(seed / 5),
+      angry: 3 + Math.floor(seed / 7)
     }
   };
 }
 
-function saveReactions(seriesId, chapterNum, data){
+function saveReactions(seriesId, chapterNum = 'series', data){
+  const cKey = chapterNum || 'series';
   try{
-    localStorage.setItem(`angelscan-react-${seriesId}-${chapterNum}`, JSON.stringify(data));
+    localStorage.setItem(`angelscan-react-${seriesId}-${cKey}`, JSON.stringify(data));
   }catch{}
 }
 
-window.handleReaction=function(seriesId, chapterNum, type){
-  const data=getReactions(seriesId, chapterNum);
-  if(data.userReaction===type){
-    data.counts[type]=Math.max(0, (data.counts[type]||1)-1);
-    data.userReaction=null;
-  }else{
-    if(data.userReaction&&data.counts[data.userReaction]>0){
+window.handleReaction = function(seriesId, chapterNum, type){
+  const cKey = chapterNum || 'series';
+  const data = getReactions(seriesId, cKey);
+  if (data.userReaction === type) {
+    data.counts[type] = Math.max(0, (data.counts[type] || 1) - 1);
+    data.userReaction = null;
+  } else {
+    if (data.userReaction && data.counts[data.userReaction] > 0) {
       data.counts[data.userReaction]--;
     }
-    data.counts[type]=(data.counts[type]||0)+1;
-    data.userReaction=type;
+    data.counts[type] = (data.counts[type] || 0) + 1;
+    data.userReaction = type;
   }
-  saveReactions(seriesId, chapterNum, data);
-  window.renderReactions(seriesId, chapterNum);
+  saveReactions(seriesId, cKey, data);
+  window.renderReactions(seriesId, cKey);
 };
 
-window.renderReactions=function(seriesId, chapterNum){
-  const container=$('#reactions-container');
-  if(!container)return;
-  const data=getReactions(seriesId, chapterNum);
-  const types=[
-    {key:'like',emoji:'👍',label:'Me gusta'},
-    {key:'love',emoji:'❤️',label:'Me encanta'},
-    {key:'laugh',emoji:'😆',label:'Divertido'},
-    {key:'wow',emoji:'😮',label:'Asombroso'},
-    {key:'sad',emoji:'😢',label:'Triste'},
-    {key:'angry',emoji:'😡',label:'Enojado'}
+window.renderReactions = function(seriesId, chapterNum = 'series'){
+  const container = $('#reactions-container');
+  if (!container) return;
+  const cKey = chapterNum || 'series';
+  const data = getReactions(seriesId, cKey);
+  const types = [
+    { key: 'like', emoji: '👍', label: 'Me gusta' },
+    { key: 'love', emoji: '❤️', label: 'Me encanta' },
+    { key: 'laugh', emoji: '😆', label: 'Divertido' },
+    { key: 'wow', emoji: '😮', label: 'Asombroso' },
+    { key: 'sad', emoji: '😢', label: 'Triste' },
+    { key: 'angry', emoji: '😡', label: 'Enojado' }
   ];
-  container.innerHTML=types.map(t=>{
-    const isSelected=data.userReaction===t.key;
-    const countVal=data.counts[t.key]||0;
+  const chArg = typeof chapterNum === 'number' ? chapterNum : `'${cKey}'`;
+  container.innerHTML = types.map(t => {
+    const isSelected = data.userReaction === t.key;
+    const countVal = data.counts[t.key] || 0;
     return `
-      <button type="button" class="reaction-btn ${isSelected?'active':''}" onclick="handleReaction('${esc(seriesId)}',${chapterNum},'${t.key}')" aria-label="${t.label} (${countVal})">
+      <button type="button" class="reaction-btn ${isSelected ? 'active' : ''}" onclick="handleReaction('${esc(seriesId)}',${chArg},'${t.key}')" aria-label="${t.label} (${countVal})">
         <span class="reaction-emoji-circle emoji-${t.key}">
           <span class="reaction-emoji">${t.emoji}</span>
         </span>
@@ -206,18 +212,13 @@ function reader(id,number){
 
         <!-- 4. Caja unificada: Reacciones integradas justo con los Comentarios -->
         <div class="reader-comments-container">
-          <div class="reader-reactions-block" id="chapter-reactions-box">
-            <div class="reactions-buttons-row" id="reactions-container"></div>
-          </div>
-          <div class="reactions-comments-divider"></div>
-          ${window.seriesCommentsMarkup(id, `${m.title} — Capítulo ${c.number}`)}
+          ${window.seriesCommentsMarkup(id, `${m.title} — Capítulo ${c.number}`, true)}
         </div>
       </div>
     </section>
   `;
 
-  window.renderReactions(id, c.number);
-  window.mountSeriesComments(id);
+  window.mountSeriesComments(id, c.number);
   $('#chapter-select').onchange=e=>location.hash=`read/${id}/${e.target.value}`;
   $('#reader-width').onchange=e=>$('.reader-pages').style.maxWidth=e.target.value+'px';
 }
